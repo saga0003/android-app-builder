@@ -5,11 +5,12 @@ A simple native Android calculator built without Android Studio.
 ## Features
 - Addition, subtraction, multiplication and division
 - Decimal numbers
-- Clear and backspace
-- Responsive native Android UI
+- Percentage, sign toggle, clear and backspace
+- Native Android UI
+- Divide-by-zero handling
 
-## Build
-The GitHub Actions workflow automatically builds a debug APK on every push to `main`.
+## Cloud build
+GitHub Actions automatically builds a debug APK on every push to `main`.
 
 Artifact name: `calculator-apk`
 
