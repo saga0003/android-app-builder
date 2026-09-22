@@ -13,7 +13,7 @@ android {
     compileSdk 36
 
     defaultConfig {
-        applicationId 'com.saga.calculator'
+        applicationId 'com.saga0003.calculator'
         minSdk 23
         targetSdk 36
         versionCode 1
