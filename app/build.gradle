@@ -2,16 +2,42 @@ plugins {
     id 'com.android.application'
 }
 
+def keystorePath = System.getenv('ANDROID_KEYSTORE_PATH')
+def keystorePassword = System.getenv('ANDROID_KEYSTORE_PASSWORD')
+def keyAlias = System.getenv('ANDROID_KEY_ALIAS')
+def keyPassword = System.getenv('ANDROID_KEY_PASSWORD')
+def releaseSigningEnabled = keystorePath && keystorePassword && keyAlias && keyPassword
+
 android {
     namespace 'com.saga.calculator'
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         applicationId 'com.saga.calculator'
         minSdk 23
-        targetSdk 35
+        targetSdk 36
         versionCode 1
-        versionName '1.0'
+        versionName '1.0.0'
+    }
+
+    signingConfigs {
+        if (releaseSigningEnabled) {
+            release {
+                storeFile file(keystorePath)
+                storePassword keystorePassword
+                keyAlias keyAlias
+                keyPassword keyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (releaseSigningEnabled) {
+                signingConfig signingConfigs.release
+            }
+        }
     }
 
     compileOptions {
