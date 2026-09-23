@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Obsidian theme palette -->
+    <color name="bg_top">#171C27</color>
+    <color name="bg_bottom">#0A0C11</color>
+    <color name="accent">#2F4DF6</color>
+
+    <!-- Launcher icon -->
+    <color name="ic_launcher_background">#10141D</color>
+</resources>
