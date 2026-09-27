@@ -14,5 +14,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Calculator"
+rootProject.name = "AndroidAppBuilder"
 include ':app'
+include ':voiceshield'
