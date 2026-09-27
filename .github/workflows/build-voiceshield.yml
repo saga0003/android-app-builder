@@ -42,12 +42,12 @@ jobs:
         run: gradle --no-daemon :voiceshield:assembleDebug
 
       - name: Rename APK
-        run: cp voiceshield/build/outputs/apk/debug/voiceshield-debug.apk VoiceShield-v0.1.0.apk
+        run: cp voiceshield/build/outputs/apk/debug/voiceshield-debug.apk VoiceShield-v0.2.0.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: voiceshield-v0.1.0-apk
-          path: VoiceShield-v0.1.0.apk
+          name: voiceshield-v0.2.0-apk
+          path: VoiceShield-v0.2.0.apk
           if-no-files-found: error
           retention-days: 30
