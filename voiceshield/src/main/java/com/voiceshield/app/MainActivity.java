@@ -34,13 +34,16 @@ public class MainActivity extends Activity implements AudioEngine.Listener {
     private static final int ACCENT = Color.rgb(43, 104, 255);
     private static final int GREEN = Color.rgb(26, 145, 88);
     private static final int RED = Color.rgb(200, 40, 40);
+    private static final int ORANGE = Color.rgb(198, 112, 24);
 
     private AudioEngine engine;
     private TextView statusText;
     private TextView routeText;
+    private TextView micModeText;
     private TextView sidetoneValue;
     private TextView suppressionValue;
-    private ProgressBar levelMeter;
+    private ProgressBar leftMeter;
+    private ProgressBar rightMeter;
     private Button startStopButton;
 
     @Override
@@ -72,18 +75,18 @@ public class MainActivity extends Activity implements AudioEngine.Listener {
                 ScrollView.LayoutParams.WRAP_CONTENT
         ));
 
-        TextView eyebrow = text("VOICE SHIELD • V1", 12, ACCENT, true);
+        TextView eyebrow = text("VOICE SHIELD • V0.2 RIDER", 12, ACCENT, true);
         eyebrow.setLetterSpacing(0.12f);
         page.addView(eyebrow);
 
-        TextView title = text("Hear yourself.\nNot the room.", 32, INK, true);
+        TextView title = text("Rider ↔ Pillion\nIntercom", 32, INK, true);
         title.setLineSpacing(0, 0.96f);
         LinearLayout.LayoutParams titleLp = lpMatchWrap();
         titleLp.topMargin = dp(6);
         page.addView(title, titleLp);
 
         TextView intro = text(
-                "Connect your Pixel Buds, keep ANC enabled in the earbuds, then start the live voice monitor. Audio is processed on this phone only.",
+                "Give one Pixel Bud to each person. When Android exposes two Bluetooth microphone channels, VoiceShield cross-feeds them so the left-bud wearer hears the right-bud microphone and the right-bud wearer hears the left-bud microphone.",
                 15, MUTED, false
         );
         intro.setLineSpacing(dp(3), 1f);
@@ -100,7 +103,7 @@ public class MainActivity extends Activity implements AudioEngine.Listener {
         statusLabel.setLetterSpacing(0.12f);
         statusCard.addView(statusLabel);
 
-        statusText = text("Voice monitor stopped.", 19, INK, true);
+        statusText = text("Intercom stopped.", 18, INK, true);
         LinearLayout.LayoutParams statusLp = lpMatchWrap();
         statusLp.topMargin = dp(6);
         statusCard.addView(statusText, statusLp);
@@ -110,23 +113,16 @@ public class MainActivity extends Activity implements AudioEngine.Listener {
         routeLp.topMargin = dp(6);
         statusCard.addView(routeText, routeLp);
 
-        TextView levelLabel = text("LIVE INPUT LEVEL", 11, MUTED, true);
-        levelLabel.setLetterSpacing(0.1f);
-        LinearLayout.LayoutParams levelLabelLp = lpMatchWrap();
-        levelLabelLp.topMargin = dp(16);
-        statusCard.addView(levelLabel, levelLabelLp);
+        micModeText = text("Start the intercom to test left and right microphone channels.", 13, MUTED, false);
+        LinearLayout.LayoutParams micModeLp = lpMatchWrap();
+        micModeLp.topMargin = dp(8);
+        statusCard.addView(micModeText, micModeLp);
 
-        levelMeter = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-        levelMeter.setMax(100);
-        levelMeter.setProgress(0);
-        LinearLayout.LayoutParams meterLp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(8)
-        );
-        meterLp.topMargin = dp(7);
-        statusCard.addView(levelMeter, meterLp);
+        addMicMeter(statusCard, "LEFT BUD MIC", true);
+        addMicMeter(statusCard, "RIGHT BUD MIC", false);
 
         startStopButton = new Button(this);
-        startStopButton.setText("START VOICE MONITOR");
+        startStopButton.setText("START RIDER INTERCOM");
         startStopButton.setTextColor(Color.WHITE);
         startStopButton.setTextSize(15);
         startStopButton.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
@@ -138,10 +134,10 @@ public class MainActivity extends Activity implements AudioEngine.Listener {
         LinearLayout.LayoutParams buttonLp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(58)
         );
-        buttonLp.topMargin = dp(16);
+        buttonLp.topMargin = dp(18);
         statusCard.addView(startStopButton, buttonLp);
 
-        TextView controlsHeader = text("VOICE CONTROLS", 13, INK, true);
+        TextView controlsHeader = text("INTERCOM CONTROLS", 13, INK, true);
         controlsHeader.setLetterSpacing(0.08f);
         LinearLayout.LayoutParams controlsHeaderLp = lpMatchWrap();
         controlsHeaderLp.topMargin = dp(24);
@@ -152,12 +148,21 @@ public class MainActivity extends Activity implements AudioEngine.Listener {
         controlCardLp.topMargin = dp(10);
         page.addView(controlCard, controlCardLp);
 
-        addSectionTitle(controlCard, "Hear myself", "How loudly your cleaned voice is played back into the earbuds.");
-        sidetoneValue = text("55%", 13, ACCENT, true);
+        Switch crossFeed = makeSwitch(
+                "Rider ↔ Pillion cross-feed",
+                "Left mic goes to the right earbud and right mic goes to the left earbud. Keep this ON when you split the buds between two people.",
+                true,
+                (buttonView, isChecked) -> engine.setCrossFeedEnabled(isChecked)
+        );
+        controlCard.addView(crossFeed, lpMatchWrap());
+
+        addDivider(controlCard);
+        addSectionTitle(controlCard, "Intercom volume", "Controls how loudly the cleaned microphone audio is played into the earbuds.");
+        sidetoneValue = text("75%", 13, ACCENT, true);
         controlCard.addView(sidetoneValue);
         SeekBar sidetone = new SeekBar(this);
         sidetone.setMax(135);
-        sidetone.setProgress(55);
+        sidetone.setProgress(75);
         sidetone.setOnSeekBarChangeListener(new SimpleSeekListener() {
             @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 sidetoneValue.setText(progress + "%");
@@ -167,7 +172,7 @@ public class MainActivity extends Activity implements AudioEngine.Listener {
         controlCard.addView(sidetone, lpMatchWrap());
 
         addDivider(controlCard);
-        addSectionTitle(controlCard, "Noise reduction", "Higher values suppress quiet room noise more aggressively.");
+        addSectionTitle(controlCard, "Noise reduction", "Increase this when riding in wind or traffic. Very high values can clip quiet speech.");
         suppressionValue = text("55% • Balanced", 13, ACCENT, true);
         controlCard.addView(suppressionValue);
         SeekBar suppression = new SeekBar(this);
@@ -183,42 +188,39 @@ public class MainActivity extends Activity implements AudioEngine.Listener {
         controlCard.addView(suppression, lpMatchWrap());
 
         addDivider(controlCard);
-        Switch androidNs = makeSwitch(
+        controlCard.addView(makeSwitch(
                 "Android noise suppressor",
-                "Uses the phone's built-in voice communication noise suppression.",
+                "Uses the phone's built-in voice noise suppression when the Bluetooth audio path supports it.",
                 true,
                 (buttonView, isChecked) -> engine.setNoiseSuppressorEnabled(isChecked)
-        );
-        controlCard.addView(androidNs, lpMatchWrap());
+        ), lpMatchWrap());
 
         addDivider(controlCard);
-        Switch wind = makeSwitch(
+        controlCard.addView(makeSwitch(
                 "Wind / low-rumble filter",
-                "Cuts low-frequency wind, handling noise and air-conditioner rumble.",
+                "Cuts low-frequency wind and engine rumble before audio is sent to the other earbud.",
                 true,
                 (buttonView, isChecked) -> engine.setWindFilterEnabled(isChecked)
-        );
-        controlCard.addView(wind, lpMatchWrap());
+        ), lpMatchWrap());
 
         addDivider(controlCard);
-        Switch agc = makeSwitch(
+        controlCard.addView(makeSwitch(
                 "Auto voice gain",
-                "Lets Android keep speech level more consistent when you move or speak softly.",
+                "Lets Android keep speech level more consistent when the Bluetooth path supports automatic gain control.",
                 true,
                 (buttonView, isChecked) -> engine.setAutoGainEnabled(isChecked)
-        );
-        controlCard.addView(agc, lpMatchWrap());
+        ), lpMatchWrap());
 
         LinearLayout noteCard = card();
-        noteCard.setBackground(roundRect(Color.rgb(237, 243, 255), 20));
+        noteCard.setBackground(roundRect(Color.rgb(255, 247, 232), 20));
         LinearLayout.LayoutParams noteLp = lpMatchWrap();
         noteLp.topMargin = dp(16);
         page.addView(noteCard, noteLp);
 
-        TextView noteTitle = text("What V1 can and cannot do", 15, INK, true);
+        TextView noteTitle = text("Important hardware check", 15, INK, true);
         noteCard.addView(noteTitle);
         TextView note = text(
-                "V1 cleans the microphone audio used by this app and gives you live sidetone. It does not replace Pixel Buds firmware ANC, and it cannot yet become the system-wide microphone for WhatsApp, Meet or normal phone calls. Background speech is reduced mainly when you are not speaking; separating overlapping voices needs the next AI model stage.",
+                "Pixel Buds contain microphones in both earbuds, but Android may still expose the pair as only one communication microphone channel. V0.2 now asks Android for the actual Bluetooth input capability and uses stereo only when the phone + buds expose it. If the screen says MONO headset mic only, a normal Android app cannot force the hidden second microphone into a separate channel.",
                 13, MUTED, false
         );
         note.setLineSpacing(dp(3), 1f);
@@ -226,13 +228,37 @@ public class MainActivity extends Activity implements AudioEngine.Listener {
         noteTextLp.topMargin = dp(7);
         noteCard.addView(note, noteTextLp);
 
-        TextView privacy = text("No account • No server • No audio upload", 12, GREEN, true);
+        TextView safety = text("Use only when it is safe and legal to hear audio while riding. Keep road awareness as the priority.", 12, ORANGE, true);
+        LinearLayout.LayoutParams safetyLp = lpMatchWrap();
+        safetyLp.topMargin = dp(16);
+        safety.setGravity(Gravity.CENTER_HORIZONTAL);
+        page.addView(safety, safetyLp);
+
+        TextView privacy = text("Local processing • No account • No audio upload", 12, GREEN, true);
         LinearLayout.LayoutParams privacyLp = lpMatchWrap();
-        privacyLp.topMargin = dp(18);
+        privacyLp.topMargin = dp(10);
         privacy.setGravity(Gravity.CENTER_HORIZONTAL);
         page.addView(privacy, privacyLp);
 
         return scroll;
+    }
+
+    private void addMicMeter(LinearLayout parent, String label, boolean left) {
+        TextView levelLabel = text(label, 11, MUTED, true);
+        levelLabel.setLetterSpacing(0.1f);
+        LinearLayout.LayoutParams labelLp = lpMatchWrap();
+        labelLp.topMargin = dp(15);
+        parent.addView(levelLabel, labelLp);
+
+        ProgressBar meter = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        meter.setMax(100);
+        meter.setProgress(0);
+        LinearLayout.LayoutParams meterLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(8)
+        );
+        meterLp.topMargin = dp(6);
+        parent.addView(meter, meterLp);
+        if (left) leftMeter = meter; else rightMeter = meter;
     }
 
     private void onStartStopPressed() {
@@ -279,7 +305,6 @@ public class MainActivity extends Activity implements AudioEngine.Listener {
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode != REQUEST_AUDIO_PERMISSIONS) return;
-
         if (hasRequiredPermissions()) {
             refreshRouteText();
             onStartStopPressed();
@@ -301,16 +326,30 @@ public class MainActivity extends Activity implements AudioEngine.Listener {
     public void onStatus(String message, boolean running) {
         runOnUiThread(() -> {
             statusText.setText(message);
-            statusText.setTextColor(running ? GREEN : INK);
-            startStopButton.setText(running ? "STOP VOICE MONITOR" : "START VOICE MONITOR");
+            boolean monoWarning = message != null && message.contains("MONO");
+            statusText.setTextColor(monoWarning ? ORANGE : (running ? GREEN : INK));
+            startStopButton.setText(running ? "STOP RIDER INTERCOM" : "START RIDER INTERCOM");
             startStopButton.setBackground(roundRect(running ? RED : ACCENT, 18));
-            if (!running) levelMeter.setProgress(0);
+            if (!running) {
+                leftMeter.setProgress(0);
+                rightMeter.setProgress(0);
+            }
         });
     }
 
     @Override
-    public void onLevel(int percent) {
-        runOnUiThread(() -> levelMeter.setProgress(percent));
+    public void onLevels(int leftPercent, int rightPercent, boolean stereoInput) {
+        runOnUiThread(() -> {
+            leftMeter.setProgress(leftPercent);
+            rightMeter.setProgress(rightPercent);
+            if (stereoInput) {
+                micModeText.setText("✓ Two Bluetooth microphone channels active. Speak separately near each bud and confirm both meters move.");
+                micModeText.setTextColor(GREEN);
+            } else {
+                micModeText.setText("Only one Bluetooth microphone channel is being exposed by Android. The right-bud mic cannot be independently captured in this connection mode.");
+                micModeText.setTextColor(ORANGE);
+            }
+        });
     }
 
     @Override
@@ -341,8 +380,7 @@ public class MainActivity extends Activity implements AudioEngine.Listener {
 
     private void addDivider(LinearLayout parent) {
         Space space = new Space(this);
-        LinearLayout.LayoutParams sLp = new LinearLayout.LayoutParams(1, dp(18));
-        parent.addView(space, sLp);
+        parent.addView(space, new LinearLayout.LayoutParams(1, dp(18)));
         View line = new View(this);
         line.setBackgroundColor(Color.rgb(233, 236, 242));
         parent.addView(line, new LinearLayout.LayoutParams(
