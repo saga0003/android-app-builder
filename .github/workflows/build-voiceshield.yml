@@ -1,0 +1,53 @@
+name: Build VoiceShield APK
+
+on:
+  push:
+    branches: [ "voice-shield-v1" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+
+      - name: Ensure Android SDK packages
+        shell: bash
+        run: |
+          SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort | tail -n 1)
+          if [ -z "$SDKMANAGER" ]; then
+            echo "sdkmanager was not found on the GitHub runner"
+            exit 1
+          fi
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Build VoiceShield debug APK
+        run: gradle --no-daemon :voiceshield:assembleDebug
+
+      - name: Rename APK
+        run: cp voiceshield/build/outputs/apk/debug/voiceshield-debug.apk VoiceShield-v0.1.0.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: voiceshield-v0.1.0-apk
+          path: VoiceShield-v0.1.0.apk
+          if-no-files-found: error
+          retention-days: 30
