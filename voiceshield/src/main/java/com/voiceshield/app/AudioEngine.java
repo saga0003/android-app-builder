@@ -10,52 +10,55 @@ import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
-import android.media.audiofx.AcousticEchoCanceler;
 import android.media.audiofx.AutomaticGainControl;
 import android.media.audiofx.NoiseSuppressor;
 import android.os.Build;
 import android.os.Process;
 
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class AudioEngine {
     public interface Listener {
         void onStatus(String message, boolean running);
-        void onLevels(int leftPercent, int rightPercent, boolean stereoInput);
+        void onLevels(int riderPercent, int pillionPercent, boolean hybridActive);
     }
+
+    private static final int SAMPLE_RATE = 16000;
+    private static final int FRAME = 320; // 20 ms
 
     private final Context context;
     private final AudioManager audioManager;
     private final Listener listener;
 
-    private volatile boolean running = false;
-    private volatile float sidetoneGain = 0.75f;
-    private volatile float suppressionStrength = 0.55f;
+    private volatile boolean running;
+    private volatile float outputGain = 0.80f;
+    private volatile float suppressionStrength = 0.60f;
     private volatile boolean windFilterEnabled = true;
     private volatile boolean noiseSuppressorEnabled = true;
     private volatile boolean autoGainEnabled = true;
-    private volatile boolean crossFeedEnabled = true;
 
-    private AudioRecord audioRecord;
+    private AudioRecord riderRecord;
+    private AudioRecord pillionRecord;
     private AudioTrack audioTrack;
-    private NoiseSuppressor noiseSuppressor;
-    private AcousticEchoCanceler echoCanceler;
-    private AutomaticGainControl automaticGainControl;
-    private Thread audioThread;
+    private Thread riderThread;
+    private Thread pillionThread;
+    private Thread mixerThread;
 
-    private AudioDeviceInfo selectedOutputDevice;
-    private AudioDeviceInfo selectedInputDevice;
-    private boolean stereoInput = false;
-    private boolean stereoOutput = false;
-    private int sampleRate = 16000;
-    private int frameFrames = 320;
+    private AudioDeviceInfo bluetoothInput;
+    private AudioDeviceInfo bluetoothOutput;
+    private AudioDeviceInfo riderInput;
 
-    private float hpPrevInputLeft = 0f;
-    private float hpPrevOutputLeft = 0f;
-    private float hpPrevInputRight = 0f;
-    private float hpPrevOutputRight = 0f;
-    private float gateGainLeft = 1f;
-    private float gateGainRight = 1f;
+    private NoiseSuppressor riderNs;
+    private NoiseSuppressor pillionNs;
+    private AutomaticGainControl riderAgc;
+    private AutomaticGainControl pillionAgc;
+
+    private final ArrayBlockingQueue<short[]> riderQueue = new ArrayBlockingQueue<>(3);
+    private final ArrayBlockingQueue<short[]> pillionQueue = new ArrayBlockingQueue<>(3);
+    private final DspState riderDsp = new DspState();
+    private final DspState pillionDsp = new DspState();
 
     public AudioEngine(Context context, Listener listener) {
         this.context = context.getApplicationContext();
@@ -63,678 +66,378 @@ public class AudioEngine {
         this.audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
     }
 
-    public boolean isRunning() {
-        return running;
-    }
+    public boolean isRunning() { return running; }
 
     public void setSidetoneGain(float value) {
-        sidetoneGain = clamp(value, 0f, 1.35f);
-        AudioTrack track = audioTrack;
-        if (track != null) {
-            try {
-                track.setVolume(Math.min(1f, sidetoneGain));
-            } catch (Exception ignored) {
-            }
+        outputGain = clamp(value, 0f, 1.35f);
+        if (audioTrack != null) {
+            try { audioTrack.setVolume(Math.min(1f, outputGain)); } catch (Exception ignored) {}
         }
     }
 
-    public void setSuppressionStrength(float value) {
-        suppressionStrength = clamp(value, 0f, 1f);
-    }
-
-    public void setWindFilterEnabled(boolean enabled) {
-        windFilterEnabled = enabled;
-    }
+    public void setSuppressionStrength(float value) { suppressionStrength = clamp(value, 0f, 1f); }
+    public void setWindFilterEnabled(boolean enabled) { windFilterEnabled = enabled; }
 
     public void setNoiseSuppressorEnabled(boolean enabled) {
         noiseSuppressorEnabled = enabled;
-        NoiseSuppressor effect = noiseSuppressor;
-        if (effect != null) {
-            try {
-                effect.setEnabled(enabled);
-            } catch (Exception ignored) {
-            }
-        }
+        try { if (riderNs != null) riderNs.setEnabled(enabled); } catch (Exception ignored) {}
+        try { if (pillionNs != null) pillionNs.setEnabled(enabled); } catch (Exception ignored) {}
     }
 
     public void setAutoGainEnabled(boolean enabled) {
         autoGainEnabled = enabled;
-        AutomaticGainControl effect = automaticGainControl;
-        if (effect != null) {
-            try {
-                effect.setEnabled(enabled);
-            } catch (Exception ignored) {
-            }
-        }
-    }
-
-    public void setCrossFeedEnabled(boolean enabled) {
-        crossFeedEnabled = enabled;
+        try { if (riderAgc != null) riderAgc.setEnabled(enabled); } catch (Exception ignored) {}
+        try { if (pillionAgc != null) pillionAgc.setEnabled(enabled); } catch (Exception ignored) {}
     }
 
     public String describeAvailableRoute() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                return "Bluetooth permission is required to detect your earbuds.";
-            }
-            try {
-                List<AudioDeviceInfo> outputs = audioManager.getAvailableCommunicationDevices();
-                for (AudioDeviceInfo output : outputs) {
-                    if (isBluetoothCommunicationDevice(output)) {
-                        AudioDeviceInfo input = findMatchingBluetoothInput(output);
-                        String name = safeDeviceName(output);
-                        if (input == null) {
-                            return "Ready: " + name + " • headset mic route pending";
-                        }
-                        return "Ready: " + name + " • mic channels reported: " + maxChannels(input);
-                    }
-                }
-                return "Connect Pixel Buds or another Bluetooth headset first.";
-            } catch (Exception e) {
-                return "Bluetooth route check unavailable on this phone.";
-            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            return "Allow Nearby devices so VoiceShield can find the Pixel Buds.";
         }
-        return "Ready to use the connected Bluetooth headset.";
+        try {
+            discoverDevices();
+            if (bluetoothOutput == null || bluetoothInput == null) {
+                return "Connect both Pixel Buds first.";
+            }
+            String rider = riderInput == null ? "phone mic not found" : safeName(riderInput);
+            return "Ready • Pillion: " + safeName(bluetoothInput) + " • Rider: " + rider;
+        } catch (Exception e) {
+            return "Connect Pixel Buds, then tap Start Hybrid Intercom.";
+        }
     }
 
     public synchronized boolean start() {
         if (running) return true;
-
         try {
             audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-
-            if (!routeToBluetooth()) {
-                audioManager.setMode(AudioManager.MODE_NORMAL);
+            discoverDevices();
+            if (bluetoothOutput == null || bluetoothInput == null) {
+                notifyStatus("Pixel Buds communication microphone was not found.", false);
+                cleanup();
+                return false;
+            }
+            if (riderInput == null) {
+                notifyStatus("Phone/USB rider microphone was not found.", false);
+                cleanup();
                 return false;
             }
 
-            selectedInputDevice = findMatchingBluetoothInput(selectedOutputDevice);
-            stereoInput = selectedInputDevice != null && maxChannels(selectedInputDevice) >= 2;
-            stereoOutput = stereoInput && selectedOutputDevice != null && maxChannels(selectedOutputDevice) >= 2;
-
-            sampleRate = chooseSampleRate(selectedInputDevice, selectedOutputDevice);
-            frameFrames = Math.max(160, sampleRate / 50); // ~20 ms
-
-            int inputMask = stereoInput ? AudioFormat.CHANNEL_IN_STEREO : AudioFormat.CHANNEL_IN_MONO;
-            int outputMask = stereoOutput ? AudioFormat.CHANNEL_OUT_STEREO : AudioFormat.CHANNEL_OUT_MONO;
-
-            int recordMin = AudioRecord.getMinBufferSize(sampleRate, inputMask, AudioFormat.ENCODING_PCM_16BIT);
-            int trackMin = AudioTrack.getMinBufferSize(sampleRate, outputMask, AudioFormat.ENCODING_PCM_16BIT);
-
-            if (recordMin <= 0 || trackMin <= 0) {
-                if (stereoInput) {
-                    // Some Bluetooth stacks advertise 2 channels but reject a stereo communication stream.
-                    stereoInput = false;
-                    stereoOutput = false;
-                    inputMask = AudioFormat.CHANNEL_IN_MONO;
-                    outputMask = AudioFormat.CHANNEL_OUT_MONO;
-                    recordMin = AudioRecord.getMinBufferSize(sampleRate, inputMask, AudioFormat.ENCODING_PCM_16BIT);
-                    trackMin = AudioTrack.getMinBufferSize(sampleRate, outputMask, AudioFormat.ENCODING_PCM_16BIT);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                    notifyStatus("Nearby-device permission is required.", false);
+                    cleanup();
+                    return false;
                 }
+                if (!audioManager.setCommunicationDevice(bluetoothOutput)) {
+                    notifyStatus("Android refused Bluetooth communication routing.", false);
+                    cleanup();
+                    return false;
+                }
+            } else {
+                audioManager.startBluetoothSco();
+                audioManager.setBluetoothScoOn(true);
             }
 
-            if (recordMin <= 0 || trackMin <= 0) {
-                notifyStatus("This phone rejected the Bluetooth communication audio format.", false);
-                clearBluetoothRoute();
-                audioManager.setMode(AudioManager.MODE_NORMAL);
+            riderRecord = buildRecorder(riderInput);
+            pillionRecord = buildRecorder(bluetoothInput);
+            audioTrack = buildTrack(bluetoothOutput);
+
+            if (!initialized(riderRecord) || !initialized(pillionRecord) ||
+                    audioTrack == null || audioTrack.getState() != AudioTrack.STATE_INITIALIZED) {
+                notifyStatus("This phone could not open both microphones at the same time.", false);
+                cleanup();
                 return false;
             }
 
-            int inputChannels = stereoInput ? 2 : 1;
-            int outputChannels = stereoOutput ? 2 : 1;
-            int recordBuffer = Math.max(recordMin * 2, frameFrames * inputChannels * 6 * 2);
-            int trackBuffer = Math.max(trackMin * 2, frameFrames * outputChannels * 6 * 2);
+            riderNs = createNs(riderRecord.getAudioSessionId());
+            pillionNs = createNs(pillionRecord.getAudioSessionId());
+            riderAgc = createAgc(riderRecord.getAudioSessionId());
+            pillionAgc = createAgc(pillionRecord.getAudioSessionId());
 
-            AudioFormat inputFormat = new AudioFormat.Builder()
-                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                    .setSampleRate(sampleRate)
-                    .setChannelMask(stereoInput ? AudioFormat.CHANNEL_IN_STEREO : AudioFormat.CHANNEL_IN_MONO)
-                    .build();
+            riderDsp.reset();
+            pillionDsp.reset();
+            riderQueue.clear();
+            pillionQueue.clear();
 
-            int source = stereoInput ? MediaRecorder.AudioSource.MIC : MediaRecorder.AudioSource.VOICE_COMMUNICATION;
-            audioRecord = new AudioRecord.Builder()
-                    .setAudioSource(source)
-                    .setAudioFormat(inputFormat)
-                    .setBufferSizeInBytes(recordBuffer)
-                    .build();
-
-            if (selectedInputDevice != null) {
-                try {
-                    audioRecord.setPreferredDevice(selectedInputDevice);
-                } catch (Exception ignored) {
-                }
-            }
-
-            AudioAttributes attributes = new AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                    .build();
-
-            AudioFormat outputFormat = new AudioFormat.Builder()
-                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                    .setSampleRate(sampleRate)
-                    .setChannelMask(stereoOutput ? AudioFormat.CHANNEL_OUT_STEREO : AudioFormat.CHANNEL_OUT_MONO)
-                    .build();
-
-            AudioTrack.Builder trackBuilder = new AudioTrack.Builder()
-                    .setAudioAttributes(attributes)
-                    .setAudioFormat(outputFormat)
-                    .setTransferMode(AudioTrack.MODE_STREAM)
-                    .setBufferSizeInBytes(trackBuffer);
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                trackBuilder.setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY);
-            }
-            audioTrack = trackBuilder.build();
-
-            if (selectedOutputDevice != null) {
-                try {
-                    audioTrack.setPreferredDevice(selectedOutputDevice);
-                } catch (Exception ignored) {
-                }
-            }
-
-            if (audioRecord.getState() != AudioRecord.STATE_INITIALIZED ||
-                    audioTrack.getState() != AudioTrack.STATE_INITIALIZED) {
-                // Final safety fallback to mono if stereo construction was accepted but did not initialize.
-                if (stereoInput) {
-                    releaseAudioObjects();
-                    stereoInput = false;
-                    stereoOutput = false;
-                    return startMonoFallback();
-                }
-                notifyStatus("Audio hardware could not initialize. Try reconnecting the earbuds.", false);
-                releaseAudioObjects();
-                clearBluetoothRoute();
-                audioManager.setMode(AudioManager.MODE_NORMAL);
-                return false;
-            }
-
-            attachAudioEffects(audioRecord.getAudioSessionId());
-            audioTrack.setVolume(Math.min(1f, sidetoneGain));
-            resetDspState();
-
-            audioRecord.startRecording();
+            riderRecord.startRecording();
+            pillionRecord.startRecording();
+            audioTrack.setVolume(Math.min(1f, outputGain));
             audioTrack.play();
             running = true;
 
-            String routeName = safeDeviceName(selectedOutputDevice);
-            if (stereoInput) {
-                String mode = stereoOutput && crossFeedEnabled
-                        ? "2-channel Rider ↔ Pillion cross-feed active"
-                        : "2-channel headset microphones active";
-                notifyStatus(mode + " • " + routeName, true);
-            } else {
-                notifyStatus("MONO headset mic only • Android is not exposing both bud microphones • " + routeName, true);
-            }
+            riderThread = new Thread(() -> captureLoop(riderRecord, riderQueue, riderDsp, true), "VoiceShield-RiderMic");
+            pillionThread = new Thread(() -> captureLoop(pillionRecord, pillionQueue, pillionDsp, false), "VoiceShield-PillionMic");
+            mixerThread = new Thread(this::mixLoop, "VoiceShield-Mixer");
+            riderThread.start();
+            pillionThread.start();
+            mixerThread.start();
 
-            audioThread = new Thread(this::audioLoop, "VoiceShieldAudio");
-            audioThread.start();
+            notifyStatus("HYBRID ACTIVE • Rider=" + safeName(riderInput) + " • Pillion=" + safeName(bluetoothInput), true);
             return true;
         } catch (SecurityException e) {
             notifyStatus("Microphone/Bluetooth permission was denied.", false);
-            cleanupAfterFailure();
+            cleanup();
             return false;
         } catch (Exception e) {
-            notifyStatus("Could not start audio: " + safeMessage(e), false);
-            cleanupAfterFailure();
-            return false;
-        }
-    }
-
-    private boolean startMonoFallback() {
-        try {
-            int recordMin = AudioRecord.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-            int trackMin = AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
-            if (recordMin <= 0 || trackMin <= 0) return false;
-
-            int recordBuffer = Math.max(recordMin * 2, frameFrames * 6 * 2);
-            int trackBuffer = Math.max(trackMin * 2, frameFrames * 6 * 2);
-
-            AudioFormat inputFormat = new AudioFormat.Builder()
-                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                    .setSampleRate(sampleRate)
-                    .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
-                    .build();
-
-            audioRecord = new AudioRecord.Builder()
-                    .setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION)
-                    .setAudioFormat(inputFormat)
-                    .setBufferSizeInBytes(recordBuffer)
-                    .build();
-            if (selectedInputDevice != null) audioRecord.setPreferredDevice(selectedInputDevice);
-
-            AudioAttributes attributes = new AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                    .build();
-            AudioFormat outputFormat = new AudioFormat.Builder()
-                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                    .setSampleRate(sampleRate)
-                    .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                    .build();
-            audioTrack = new AudioTrack.Builder()
-                    .setAudioAttributes(attributes)
-                    .setAudioFormat(outputFormat)
-                    .setTransferMode(AudioTrack.MODE_STREAM)
-                    .setBufferSizeInBytes(trackBuffer)
-                    .build();
-            if (selectedOutputDevice != null) audioTrack.setPreferredDevice(selectedOutputDevice);
-
-            if (audioRecord.getState() != AudioRecord.STATE_INITIALIZED || audioTrack.getState() != AudioTrack.STATE_INITIALIZED) {
-                notifyStatus("Bluetooth mono fallback could not initialize.", false);
-                cleanupAfterFailure();
-                return false;
-            }
-
-            attachAudioEffects(audioRecord.getAudioSessionId());
-            audioTrack.setVolume(Math.min(1f, sidetoneGain));
-            resetDspState();
-            audioRecord.startRecording();
-            audioTrack.play();
-            running = true;
-            notifyStatus("MONO headset mic only • Android is not exposing both bud microphones • " + safeDeviceName(selectedOutputDevice), true);
-            audioThread = new Thread(this::audioLoop, "VoiceShieldAudio");
-            audioThread.start();
-            return true;
-        } catch (Exception e) {
-            notifyStatus("Mono fallback failed: " + safeMessage(e), false);
-            cleanupAfterFailure();
+            notifyStatus("Hybrid intercom could not start: " + safeMessage(e), false);
+            cleanup();
             return false;
         }
     }
 
     public synchronized void stop() {
-        if (!running && audioRecord == null && audioTrack == null) return;
+        boolean hadAudio = running || riderRecord != null || pillionRecord != null || audioTrack != null;
         running = false;
-
-        try {
-            if (audioRecord != null) audioRecord.stop();
-        } catch (Exception ignored) {
-        }
-        try {
-            if (audioTrack != null) {
-                audioTrack.pause();
-                audioTrack.flush();
-            }
-        } catch (Exception ignored) {
-        }
-
-        if (audioThread != null && audioThread != Thread.currentThread()) {
-            try {
-                audioThread.join(350);
-            } catch (InterruptedException ignored) {
-                Thread.currentThread().interrupt();
-            }
-        }
-
-        releaseEffects();
-        releaseAudioObjects();
-        clearBluetoothRoute();
-        try {
-            audioManager.setMode(AudioManager.MODE_NORMAL);
-        } catch (Exception ignored) {
-        }
-        notifyStatus("Voice monitor stopped.", false);
+        stopRecord(riderRecord);
+        stopRecord(pillionRecord);
+        try { if (audioTrack != null) { audioTrack.pause(); audioTrack.flush(); } } catch (Exception ignored) {}
+        join(riderThread); join(pillionThread); join(mixerThread);
+        cleanup();
+        if (hadAudio) notifyStatus("Hybrid intercom stopped.", false);
         notifyLevels(0, 0, false);
     }
 
-    private void audioLoop() {
-        Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
-        int inputChannels = stereoInput ? 2 : 1;
-        int outputChannels = stereoOutput ? 2 : 1;
-        short[] input = new short[frameFrames * inputChannels];
-        short[] output = new short[frameFrames * outputChannels];
-        long lastMeterUpdate = 0L;
+    private void discoverDevices() {
+        bluetoothInput = null;
+        bluetoothOutput = null;
+        riderInput = null;
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            List<AudioDeviceInfo> comm = audioManager.getAvailableCommunicationDevices();
+            for (AudioDeviceInfo d : comm) {
+                if (isBluetooth(d)) {
+                    if (bluetoothOutput == null || d.getType() == AudioDeviceInfo.TYPE_BLE_HEADSET) bluetoothOutput = d;
+                }
+            }
+        }
+
+        AudioDeviceInfo[] inputs = audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS);
+        for (AudioDeviceInfo d : inputs) {
+            if (isBluetooth(d)) {
+                if (bluetoothInput == null || d.getType() == AudioDeviceInfo.TYPE_BLE_HEADSET) bluetoothInput = d;
+            }
+        }
+
+        // Prefer a USB/wired mic inside the rider helmet if present; otherwise use phone mic.
+        for (AudioDeviceInfo d : inputs) {
+            int t = d.getType();
+            if (t == AudioDeviceInfo.TYPE_USB_HEADSET || t == AudioDeviceInfo.TYPE_USB_DEVICE ||
+                    t == AudioDeviceInfo.TYPE_WIRED_HEADSET) {
+                riderInput = d;
+                break;
+            }
+        }
+        if (riderInput == null) {
+            for (AudioDeviceInfo d : inputs) {
+                if (d.getType() == AudioDeviceInfo.TYPE_BUILTIN_MIC) {
+                    riderInput = d;
+                    break;
+                }
+            }
+        }
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S && bluetoothOutput == null) bluetoothOutput = bluetoothInput;
+    }
+
+    private AudioRecord buildRecorder(AudioDeviceInfo preferred) {
+        int min = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+        if (min <= 0) return null;
+        AudioFormat format = new AudioFormat.Builder()
+                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                .setSampleRate(SAMPLE_RATE)
+                .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
+                .build();
+        AudioRecord.Builder b = new AudioRecord.Builder()
+                .setAudioSource(MediaRecorder.AudioSource.MIC)
+                .setAudioFormat(format)
+                .setBufferSizeInBytes(Math.max(min * 2, FRAME * 12));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) b.setPrivacySensitive(false);
+        AudioRecord r = b.build();
+        if (preferred != null) {
+            try { r.setPreferredDevice(preferred); } catch (Exception ignored) {}
+        }
+        return r;
+    }
+
+    private AudioTrack buildTrack(AudioDeviceInfo preferred) {
+        int min = AudioTrack.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
+        if (min <= 0) return null;
+        AudioAttributes attr = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                .build();
+        AudioFormat fmt = new AudioFormat.Builder()
+                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                .setSampleRate(SAMPLE_RATE)
+                .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                .build();
+        AudioTrack.Builder b = new AudioTrack.Builder()
+                .setAudioAttributes(attr)
+                .setAudioFormat(fmt)
+                .setTransferMode(AudioTrack.MODE_STREAM)
+                .setBufferSizeInBytes(Math.max(min * 2, FRAME * 12));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) b.setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY);
+        AudioTrack t = b.build();
+        if (preferred != null) {
+            try { t.setPreferredDevice(preferred); } catch (Exception ignored) {}
+        }
+        return t;
+    }
+
+    private void captureLoop(AudioRecord record, ArrayBlockingQueue<short[]> queue, DspState state, boolean rider) {
+        Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
+        short[] buf = new short[FRAME];
         try {
             while (running) {
-                int count = audioRecord.read(input, 0, input.length, AudioRecord.READ_BLOCKING);
-                if (count <= 0) continue;
+                int n = record.read(buf, 0, buf.length, AudioRecord.READ_BLOCKING);
+                if (n <= 0) continue;
+                float rms = process(buf, n, state);
+                short[] copy = new short[FRAME];
+                System.arraycopy(buf, 0, copy, 0, Math.min(n, FRAME));
+                while (!queue.offer(copy)) queue.poll();
+                state.level = toPercent(rms);
+                if (rider) notifyLevels(state.level, pillionDsp.level, true);
+                else notifyLevels(riderDsp.level, state.level, true);
+            }
+        } catch (Exception e) {
+            if (running) notifyStatus((rider ? "Rider" : "Pillion") + " mic stopped: " + safeMessage(e), false);
+        }
+    }
 
-                Levels levels;
-                int outputCount;
-                if (stereoInput) {
-                    int frames = count / 2;
-                    levels = processStereoInPlace(input, frames);
-                    if (stereoOutput) {
-                        for (int f = 0; f < frames; f++) {
-                            short leftMic = input[f * 2];
-                            short rightMic = input[f * 2 + 1];
-                            if (crossFeedEnabled) {
-                                output[f * 2] = rightMic;      // wife/right mic -> rider/left ear
-                                output[f * 2 + 1] = leftMic;  // rider/left mic -> wife/right ear
-                            } else {
-                                output[f * 2] = leftMic;
-                                output[f * 2 + 1] = rightMic;
-                            }
-                        }
-                        outputCount = frames * 2;
-                    } else {
-                        for (int f = 0; f < frames; f++) {
-                            int mixed = (input[f * 2] + input[f * 2 + 1]) / 2;
-                            output[f] = (short) mixed;
-                        }
-                        outputCount = frames;
-                    }
-                } else {
-                    float rms = processMonoInPlace(input, count);
-                    levels = new Levels(rms, 0f);
-                    System.arraycopy(input, 0, output, 0, count);
-                    outputCount = count;
+    private void mixLoop() {
+        Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
+        short[] silence = new short[FRAME];
+        short[] out = new short[FRAME];
+        try {
+            while (running) {
+                short[] rider = riderQueue.poll(28, TimeUnit.MILLISECONDS);
+                short[] pillion = pillionQueue.poll(8, TimeUnit.MILLISECONDS);
+                if (rider == null) rider = silence;
+                if (pillion == null) pillion = silence;
+
+                for (int i = 0; i < FRAME; i++) {
+                    float mixed = (rider[i] / 32768f) * 0.72f + (pillion[i] / 32768f) * 0.82f;
+                    mixed = softLimit(mixed);
+                    out[i] = (short) Math.round(mixed * 32767f);
                 }
-
                 int written = 0;
-                while (running && written < outputCount) {
-                    int n = audioTrack.write(output, written, outputCount - written, AudioTrack.WRITE_BLOCKING);
+                while (running && written < out.length) {
+                    int n = audioTrack.write(out, written, out.length - written, AudioTrack.WRITE_BLOCKING);
                     if (n <= 0) break;
                     written += n;
                 }
-
-                long now = System.nanoTime();
-                if (now - lastMeterUpdate > 90_000_000L) {
-                    notifyLevels(levelToPercent(levels.left), levelToPercent(levels.right), stereoInput);
-                    lastMeterUpdate = now;
-                }
             }
         } catch (Exception e) {
-            if (running) notifyStatus("Audio stream stopped: " + safeMessage(e), false);
+            if (running) notifyStatus("Intercom mixer stopped: " + safeMessage(e), false);
         }
     }
 
-    private Levels processStereoInPlace(short[] samples, int frames) {
-        double leftEnergy = 0.0;
-        double rightEnergy = 0.0;
-        for (int f = 0; f < frames; f++) {
-            float l = samples[f * 2] / 32768f;
-            float r = samples[f * 2 + 1] / 32768f;
-            leftEnergy += l * l;
-            rightEnergy += r * r;
-        }
-        float leftRms = (float) Math.sqrt(leftEnergy / Math.max(1, frames));
-        float rightRms = (float) Math.sqrt(rightEnergy / Math.max(1, frames));
-        gateGainLeft = updateGate(gateGainLeft, leftRms);
-        gateGainRight = updateGate(gateGainRight, rightRms);
-
-        float alpha = highPassAlpha();
-        float softwareGain = sidetoneGain > 1f ? sidetoneGain : 1f;
-        for (int f = 0; f < frames; f++) {
-            float left = samples[f * 2] / 32768f;
-            float right = samples[f * 2 + 1] / 32768f;
-
-            if (windFilterEnabled) {
-                float filteredLeft = alpha * (hpPrevOutputLeft + left - hpPrevInputLeft);
-                hpPrevInputLeft = left;
-                hpPrevOutputLeft = filteredLeft;
-                left = filteredLeft;
-
-                float filteredRight = alpha * (hpPrevOutputRight + right - hpPrevInputRight);
-                hpPrevInputRight = right;
-                hpPrevOutputRight = filteredRight;
-                right = filteredRight;
-            }
-
-            left = softLimit(left * gateGainLeft * softwareGain);
-            right = softLimit(right * gateGainRight * softwareGain);
-            samples[f * 2] = (short) Math.round(left * 32767f);
-            samples[f * 2 + 1] = (short) Math.round(right * 32767f);
-        }
-        return new Levels(leftRms, rightRms);
-    }
-
-    private float processMonoInPlace(short[] samples, int count) {
-        double energy = 0.0;
+    private float process(short[] samples, int count, DspState state) {
+        double energy = 0;
         for (int i = 0; i < count; i++) {
             float x = samples[i] / 32768f;
             energy += x * x;
         }
         float rms = (float) Math.sqrt(energy / Math.max(1, count));
-        gateGainLeft = updateGate(gateGainLeft, rms);
-        float alpha = highPassAlpha();
-        float softwareGain = sidetoneGain > 1f ? sidetoneGain : 1f;
+        float s = suppressionStrength;
+        float threshold = 0.006f + 0.018f * s;
+        float floor = Math.max(0.07f, 1f - 0.90f * s);
+        float target = rms < threshold * 0.60f ? floor : (rms > threshold * 1.7f ? 1f : 0.55f + 0.45f * Math.min(1f, rms / Math.max(0.001f, threshold)));
+        state.gate += (target - state.gate) * (target > state.gate ? 0.30f : 0.07f);
+
+        float cutoff = 120f + 120f * s;
+        float dt = 1f / SAMPLE_RATE;
+        float rc = 1f / (2f * (float)Math.PI * cutoff);
+        float alpha = rc / (rc + dt);
 
         for (int i = 0; i < count; i++) {
             float x = samples[i] / 32768f;
             float y = x;
             if (windFilterEnabled) {
-                y = alpha * (hpPrevOutputLeft + x - hpPrevInputLeft);
-                hpPrevInputLeft = x;
-                hpPrevOutputLeft = y;
+                y = alpha * (state.hpOut + x - state.hpIn);
+                state.hpIn = x;
+                state.hpOut = y;
             }
-            y = softLimit(y * gateGainLeft * softwareGain);
-            samples[i] = (short) Math.round(y * 32767f);
+            y *= state.gate;
+            y = softLimit(y);
+            samples[i] = (short)Math.round(y * 32767f);
         }
         return rms;
     }
 
-    private float updateGate(float current, float rms) {
-        float strength = suppressionStrength;
-        float threshold = 0.0055f + (0.0185f * strength);
-        float floorGain = Math.max(0.08f, 1f - (0.88f * strength));
-        float target;
-        if (rms <= threshold * 0.55f) {
-            target = floorGain;
-        } else if (rms >= threshold * 1.8f) {
-            target = 1f;
-        } else {
-            float t = (rms - threshold * 0.55f) / (threshold * 1.25f);
-            target = floorGain + (1f - floorGain) * clamp(t, 0f, 1f);
-        }
-        float attack = target > current ? 0.34f : 0.08f;
-        return current + (target - current) * attack;
-    }
-
-    private float highPassAlpha() {
-        float cutoffHz = 115f + (95f * suppressionStrength);
-        float dt = 1f / sampleRate;
-        float rc = 1f / (2f * (float) Math.PI * cutoffHz);
-        return rc / (rc + dt);
-    }
-
-    private boolean routeToBluetooth() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                notifyStatus("Bluetooth permission is required.", false);
-                return false;
-            }
-
-            List<AudioDeviceInfo> devices = audioManager.getAvailableCommunicationDevices();
-            AudioDeviceInfo best = null;
-            for (AudioDeviceInfo device : devices) {
-                if (device.getType() == AudioDeviceInfo.TYPE_BLE_HEADSET) {
-                    best = device;
-                    break;
-                }
-                if (device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_SCO) {
-                    best = device;
-                }
-            }
-            if (best == null) {
-                notifyStatus("No Bluetooth communication headset found. Connect your Pixel Buds first.", false);
-                return false;
-            }
-            if (!audioManager.setCommunicationDevice(best)) {
-                notifyStatus("Android could not route communication audio to the earbuds.", false);
-                return false;
-            }
-            selectedOutputDevice = best;
-            return true;
-        }
-
-        try {
-            audioManager.startBluetoothSco();
-            audioManager.setBluetoothScoOn(true);
-            selectedOutputDevice = null;
-            return true;
-        } catch (Exception e) {
-            notifyStatus("Could not activate Bluetooth headset audio.", false);
-            return false;
-        }
-    }
-
-    private AudioDeviceInfo findMatchingBluetoothInput(AudioDeviceInfo output) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return null;
-        try {
-            AudioDeviceInfo fallback = null;
-            String outputName = output == null ? "" : safeDeviceName(output);
-            int outputType = output == null ? -1 : output.getType();
-            for (AudioDeviceInfo device : audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)) {
-                if (!device.isSource() || !isBluetoothCommunicationDevice(device)) continue;
-                if (fallback == null) fallback = device;
-                String inputName = safeDeviceName(device);
-                if (outputType == device.getType() && outputName.equals(inputName)) return device;
-                if (outputType == device.getType()) fallback = device;
-            }
-            return fallback;
-        } catch (Exception ignored) {
-            return null;
-        }
-    }
-
-    private int chooseSampleRate(AudioDeviceInfo input, AudioDeviceInfo output) {
-        if (supportsSampleRate(input, 32000) && supportsSampleRate(output, 32000)) return 32000;
-        if (supportsSampleRate(input, 16000) || input == null) return 16000;
-        int[] rates = input.getSampleRates();
-        if (rates != null) {
-            for (int rate : rates) {
-                if (rate >= 16000 && rate <= 48000) return rate;
-            }
-        }
-        return 16000;
-    }
-
-    private boolean supportsSampleRate(AudioDeviceInfo device, int target) {
-        if (device == null) return false;
-        int[] rates = device.getSampleRates();
-        if (rates == null || rates.length == 0) return true;
-        for (int rate : rates) if (rate == target) return true;
-        return false;
-    }
-
-    private static int maxChannels(AudioDeviceInfo device) {
-        if (device == null) return 0;
-        int max = 0;
-        int[] counts = device.getChannelCounts();
-        if (counts != null) for (int c : counts) max = Math.max(max, c);
-        return max == 0 ? 1 : max;
-    }
-
-    private static String safeDeviceName(AudioDeviceInfo device) {
-        if (device == null) return "Bluetooth headset";
-        CharSequence name = device.getProductName();
-        return name == null || name.length() == 0 ? "Bluetooth headset" : name.toString();
-    }
-
-    private void clearBluetoothRoute() {
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                audioManager.clearCommunicationDevice();
-            } else {
-                audioManager.setBluetoothScoOn(false);
-                audioManager.stopBluetoothSco();
-            }
-        } catch (Exception ignored) {
-        }
-        selectedOutputDevice = null;
-        selectedInputDevice = null;
-    }
-
-    private static boolean isBluetoothCommunicationDevice(AudioDeviceInfo device) {
-        int type = device.getType();
-        return type == AudioDeviceInfo.TYPE_BLE_HEADSET || type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO;
-    }
-
-    private void attachAudioEffects(int sessionId) {
+    private NoiseSuppressor createNs(int session) {
         try {
             if (NoiseSuppressor.isAvailable()) {
-                noiseSuppressor = NoiseSuppressor.create(sessionId);
-                if (noiseSuppressor != null) noiseSuppressor.setEnabled(noiseSuppressorEnabled);
+                NoiseSuppressor n = NoiseSuppressor.create(session);
+                if (n != null) n.setEnabled(noiseSuppressorEnabled);
+                return n;
             }
-        } catch (Exception ignored) {
-        }
-        try {
-            if (AcousticEchoCanceler.isAvailable()) {
-                echoCanceler = AcousticEchoCanceler.create(sessionId);
-                if (echoCanceler != null) echoCanceler.setEnabled(true);
-            }
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    private AutomaticGainControl createAgc(int session) {
         try {
             if (AutomaticGainControl.isAvailable()) {
-                automaticGainControl = AutomaticGainControl.create(sessionId);
-                if (automaticGainControl != null) automaticGainControl.setEnabled(autoGainEnabled);
+                AutomaticGainControl a = AutomaticGainControl.create(session);
+                if (a != null) a.setEnabled(autoGainEnabled);
+                return a;
             }
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
+        return null;
     }
 
-    private void resetDspState() {
-        hpPrevInputLeft = 0f;
-        hpPrevOutputLeft = 0f;
-        hpPrevInputRight = 0f;
-        hpPrevOutputRight = 0f;
-        gateGainLeft = 1f;
-        gateGainRight = 1f;
-    }
-
-    private void releaseEffects() {
-        try { if (noiseSuppressor != null) noiseSuppressor.release(); } catch (Exception ignored) {}
-        try { if (echoCanceler != null) echoCanceler.release(); } catch (Exception ignored) {}
-        try { if (automaticGainControl != null) automaticGainControl.release(); } catch (Exception ignored) {}
-        noiseSuppressor = null;
-        echoCanceler = null;
-        automaticGainControl = null;
-    }
-
-    private void releaseAudioObjects() {
-        try { if (audioRecord != null) audioRecord.release(); } catch (Exception ignored) {}
-        try { if (audioTrack != null) audioTrack.release(); } catch (Exception ignored) {}
-        audioRecord = null;
-        audioTrack = null;
-        audioThread = null;
-    }
-
-    private void cleanupAfterFailure() {
+    private void cleanup() {
         running = false;
-        releaseEffects();
-        releaseAudioObjects();
-        clearBluetoothRoute();
+        release(riderNs); riderNs = null;
+        release(pillionNs); pillionNs = null;
+        release(riderAgc); riderAgc = null;
+        release(pillionAgc); pillionAgc = null;
+        release(riderRecord); riderRecord = null;
+        release(pillionRecord); pillionRecord = null;
+        release(audioTrack); audioTrack = null;
+        riderQueue.clear(); pillionQueue.clear();
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) audioManager.clearCommunicationDevice();
+            else { audioManager.setBluetoothScoOn(false); audioManager.stopBluetoothSco(); }
+        } catch (Exception ignored) {}
         try { audioManager.setMode(AudioManager.MODE_NORMAL); } catch (Exception ignored) {}
     }
 
-    private void notifyStatus(String message, boolean active) {
-        if (listener != null) listener.onStatus(message, active);
+    private static boolean initialized(AudioRecord r) { return r != null && r.getState() == AudioRecord.STATE_INITIALIZED; }
+    private static boolean isBluetooth(AudioDeviceInfo d) {
+        int t = d.getType();
+        return t == AudioDeviceInfo.TYPE_BLUETOOTH_SCO || (Build.VERSION.SDK_INT >= 31 && t == AudioDeviceInfo.TYPE_BLE_HEADSET);
     }
-
-    private void notifyLevels(int left, int right, boolean stereo) {
-        if (listener != null) listener.onLevels(left, right, stereo);
-    }
-
-    private static int levelToPercent(float rms) {
-        return Math.min(100, Math.max(0, (int) (rms * 520f)));
-    }
-
-    private static float softLimit(float x) {
-        if (x > 1f) return 1f - (1f / (1f + (x - 1f) * 4f));
-        if (x < -1f) return -1f + (1f / (1f + (-x - 1f) * 4f));
-        return x;
-    }
-
-    private static float clamp(float value, float min, float max) {
-        return Math.max(min, Math.min(max, value));
-    }
-
-    private static String safeMessage(Exception e) {
-        String message = e.getMessage();
-        return message == null || message.trim().isEmpty() ? e.getClass().getSimpleName() : message;
-    }
-
-    private static class Levels {
-        final float left;
-        final float right;
-        Levels(float left, float right) {
-            this.left = left;
-            this.right = right;
+    private static String safeName(AudioDeviceInfo d) {
+        if (d == null) return "unknown";
+        CharSequence n = d.getProductName();
+        if (n != null && n.length() > 0) return n.toString();
+        switch (d.getType()) {
+            case AudioDeviceInfo.TYPE_BUILTIN_MIC: return "Phone microphone";
+            case AudioDeviceInfo.TYPE_USB_HEADSET: return "USB headset microphone";
+            case AudioDeviceInfo.TYPE_WIRED_HEADSET: return "Wired headset microphone";
+            default: return "Audio device";
         }
+    }
+    private static int toPercent(float rms) { return Math.min(100, Math.max(0, (int)(rms * 600f))); }
+    private static float clamp(float v, float lo, float hi) { return Math.max(lo, Math.min(hi, v)); }
+    private static float softLimit(float x) { return (float)Math.tanh(x * 1.15f); }
+    private static String safeMessage(Exception e) { return e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage(); }
+    private static void stopRecord(AudioRecord r) { try { if (r != null) r.stop(); } catch (Exception ignored) {} }
+    private static void release(AudioRecord r) { try { if (r != null) r.release(); } catch (Exception ignored) {} }
+    private static void release(AudioTrack t) { try { if (t != null) t.release(); } catch (Exception ignored) {} }
+    private static void release(NoiseSuppressor n) { try { if (n != null) n.release(); } catch (Exception ignored) {} }
+    private static void release(AutomaticGainControl a) { try { if (a != null) a.release(); } catch (Exception ignored) {} }
+    private static void join(Thread t) { if (t == null || t == Thread.currentThread()) return; try { t.join(250); } catch (InterruptedException e) { Thread.currentThread().interrupt(); } }
+
+    private void notifyStatus(String msg, boolean active) { if (listener != null) listener.onStatus(msg, active); }
+    private void notifyLevels(int rider, int pillion, boolean hybrid) { if (listener != null) listener.onLevels(rider, pillion, hybrid); }
+
+    private static class DspState {
+        float hpIn, hpOut, gate = 1f;
+        volatile int level;
+        void reset() { hpIn = hpOut = 0f; gate = 1f; level = 0; }
     }
 }
