@@ -1,47 +1,14 @@
-plugins {
-    id 'com.android.application'
-}
-
-def keystorePath = System.getenv('ANDROID_KEYSTORE_PATH')
-def keystorePassword = System.getenv('ANDROID_KEYSTORE_PASSWORD')
-def keyAlias = System.getenv('ANDROID_KEY_ALIAS')
-def keyPassword = System.getenv('ANDROID_KEY_PASSWORD')
-def releaseSigningEnabled = keystorePath && keystorePassword && keyAlias && keyPassword
-
+plugins { id 'com.android.application' }
 android {
-    namespace 'com.saga.calculator'
-    compileSdk 36
-
-    defaultConfig {
-        applicationId 'com.saga0003.calculator'
-        minSdk 23
-        targetSdk 36
-        versionCode 1
-        versionName '1.0.0'
-    }
-
-    signingConfigs {
-        if (releaseSigningEnabled) {
-            release {
-                storeFile file(keystorePath)
-                storePassword keystorePassword
-                keyAlias keyAlias
-                keyPassword keyPassword
-            }
-        }
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled false
-            if (releaseSigningEnabled) {
-                signingConfig signingConfigs.release
-            }
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
+  namespace 'com.steprivo.app'
+  compileSdk 36
+  defaultConfig {
+    applicationId 'com.steprivo.app'
+    minSdk 26
+    targetSdk 35
+    versionCode 1
+    versionName '0.1.0-offline'
+  }
+  buildTypes { release { minifyEnabled false } }
+  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }

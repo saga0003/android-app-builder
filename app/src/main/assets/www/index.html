@@ -1,0 +1,2061 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Steprivo 2.0 — Interactive Prototype</title>
+
+
+
+<style>
+/* ============================================================
+   STEPRIVO 2.0 — DESIGN TOKENS
+   Brand: "Stride" system. Navy ink + mint action + gold milestone.
+   ============================================================ */
+:root{
+  /* Brand */
+  --mint-500:#00C389; --mint-600:#00A876; --mint-700:#007A56;
+  --mint-tint:#E4F6EE; --mint-ink:#065F46;
+  --gold-500:#F0B429; --gold-600:#D89B16; --gold-ink:#8A6116; --gold-tint:#FCF3DC;
+  --navy-900:#0A1628; --navy-800:#122438;
+
+  /* Light theme surfaces */
+  --bg:#F5F8F6; --surface:#FFFFFF; --surface-2:#EDF2EF; --surface-3:#E4EBE7;
+  --line:#E2E9E5; --line-strong:#CBD6D0;
+  --text:#0C1D2E; --text-2:#54666F; --text-3:#8797A0;
+  --on-mint:#FFFFFF;
+
+  /* Semantic */
+  --danger:#DE4A4F; --danger-tint:#FCEBEC; --info:#3D7DC8; --info-tint:#E9F1FA;
+  --warn-ink:#8A6116; --warn-tint:#FCF3DC;
+
+  /* Elevation */
+  --sh-1:0 1px 2px rgba(12,29,46,.05),0 2px 8px rgba(12,29,46,.04);
+  --sh-2:0 4px 14px rgba(12,29,46,.08),0 2px 4px rgba(12,29,46,.05);
+  --sh-3:0 12px 32px rgba(12,29,46,.14);
+  --sh-fab:0 8px 20px rgba(0,195,137,.35);
+
+  /* Radii */
+  --r-s:10px; --r-m:14px; --r-l:20px; --r-xl:26px;
+  --font-display:'Sora',-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-ui:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+html[data-theme="dark"]{
+  --bg:#0A131D; --surface:#132231; --surface-2:#1A2D40; --surface-3:#223649;
+  --line:#22384C; --line-strong:#31485E;
+  --text:#EAF1EC; --text-2:#9CB0B8; --text-3:#69808B;
+  --mint-tint:#12332A; --mint-ink:#5EE0B4;
+  --gold-tint:#3A2F14; --gold-ink:#F2C55C;
+  --danger:#F26D71; --danger-tint:#3A2022; --info:#7FB0E8; --info-tint:#1A2B40;
+  --sh-1:0 1px 2px rgba(0,0,0,.35); --sh-2:0 4px 14px rgba(0,0,0,.4);
+  --sh-3:0 12px 32px rgba(0,0,0,.5);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:var(--font-ui); background:var(--bg); color:var(--text);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  font-variant-numeric:tabular-nums;
+}
+button{font-family:inherit;border:none;background:none;cursor:pointer;color:inherit}
+img,svg{display:block}
+::-webkit-scrollbar{width:0;height:0}
+
+/* ============ DESKTOP STAGE + SIDE PANEL ============ */
+#stage{
+  min-height:100vh; display:flex; align-items:center; justify-content:center;
+  gap:56px; padding:36px 24px;
+  background:
+    radial-gradient(900px 520px at 12% -8%, rgba(0,195,137,.10), transparent 60%),
+    radial-gradient(760px 520px at 95% 108%, rgba(240,180,41,.09), transparent 60%),
+    linear-gradient(160deg,#0B1826 0%,#0A1628 55%,#0C2033 100%);
+}
+@media (max-width:880px){ #stage{padding:0;gap:0;background:none;display:block} }
+#panel{width:330px;color:#E8F0EC;flex-shrink:0}
+@media (max-width:880px){ #panel{display:none} }
+#panel .p-logo{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+#panel .p-logo .p-icon{width:46px;height:46px;border-radius:14px;background:linear-gradient(145deg,#00C389,#00966B);
+  display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,195,137,.35)}
+#panel h1{font-family:var(--font-display);font-size:23px;font-weight:700;letter-spacing:-.3px;line-height:1.15;color:#F4F9F6}
+#panel h1 span{color:#5EE0B4}
+#panel .p-sub{font-size:12.5px;color:#93A8B0;line-height:1.65;margin:10px 0 20px}
+#panel .p-card{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.09);
+  border-radius:14px;padding:14px 16px;margin-bottom:14px}
+#panel .p-card h3{font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:#7E96A0;font-weight:600;margin-bottom:10px}
+#panel .p-links{display:flex;flex-wrap:wrap;gap:7px}
+#panel .p-links button{
+  font-size:11.5px;font-weight:500;color:#C6D6D2;padding:6px 11px;border-radius:99px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.10);transition:.18s}
+#panel .p-links button:hover{background:rgba(0,195,137,.18);color:#7FE8C6;border-color:rgba(0,195,137,.4)}
+#panel .p-links button.on{background:rgba(0,195,137,.25);color:#8FF0CC;border-color:rgba(0,195,137,.55)}
+#panel .p-note{font-size:11px;color:#7E96A0;line-height:1.7}
+#panel .p-note b{color:#C6D6D2;font-weight:600}
+#panel .p-actions{display:flex;gap:10px;margin-top:4px}
+#panel .p-actions button{
+  flex:1;font-size:12px;font-weight:600;padding:10px 0;border-radius:11px;transition:.18s;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#DFEAE6}
+#panel .p-actions button:hover{background:rgba(0,195,137,.2);border-color:rgba(0,195,137,.45);color:#8FF0CC}
+
+/* ============ PHONE FRAME ============ */
+#phone{
+  width:393px;height:852px;background:var(--bg);border-radius:46px;position:relative;
+  border:10px solid #060D16; outline:1px solid rgba(255,255,255,.12);
+  box-shadow:0 40px 90px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.4);overflow:hidden;flex-shrink:0}
+@media (max-width:880px){
+  #phone{width:100%;height:100dvh;border:none;border-radius:0;outline:none;box-shadow:none}
+}
+#app{height:100%;display:flex;flex-direction:column;position:relative;overflow:hidden}
+
+/* status bar */
+#statusbar{height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+  padding:0 22px 0 26px;font-size:13px;font-weight:600;position:relative;z-index:5}
+#statusbar .sb-icons{display:flex;gap:5px;align-items:center}
+.notch{position:absolute;left:50%;top:11px;transform:translateX(-50%);width:112px;height:26px;
+  background:#060D16;border-radius:20px;z-index:6}
+
+/* screens */
+#screens{flex:1;overflow-y:auto;overscroll-behavior:contain;position:relative;scrollbar-width:none}
+.screen{display:none;min-height:100%;padding-bottom:112px}
+.screen.active{display:block;animation:screenIn .34s cubic-bezier(.22,.9,.3,1)}
+@keyframes screenIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.pad{padding:0 20px}
+.section-gap{height:20px}
+
+/* ============ TAB BAR + FAB ============ */
+#tabbar{
+  position:absolute;left:0;right:0;bottom:0;z-index:40;display:none;
+  align-items:flex-end;justify-content:space-around;height:82px;padding:0 8px 6px;
+  background:color-mix(in srgb,var(--surface) 88%,transparent);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-top:1px solid var(--line)}
+#tabbar.show{display:flex}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;width:64px;padding:9px 0 4px;
+  color:var(--text-3);border-radius:14px;transition:color .2s;position:relative}
+.tab .t-label{font-size:10px;font-weight:600;letter-spacing:.2px}
+.tab.on{color:var(--mint-600)}
+html[data-theme="dark"] .tab.on{color:var(--mint-ink)}
+.tab.on::after{content:'';position:absolute;top:0;width:16px;height:3px;border-radius:99px;background:var(--mint-500)}
+.tab svg{width:23px;height:23px}
+#fab{
+  position:absolute;bottom:34px;left:50%;transform:translateX(-50%);z-index:41;
+  width:62px;height:62px;border-radius:50%;display:none;align-items:center;justify-content:center;
+  background:linear-gradient(150deg,#00D495,#00A876);box-shadow:var(--sh-fab);
+  border:4px solid var(--bg);transition:transform .18s}
+#fab.show{display:flex}
+#fab:active{transform:translateX(-50%) scale(.93)}
+#fab svg{width:28px;height:28px;color:#fff}
+#fab .fab-tag{position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);
+  font-size:8.5px;font-weight:700;letter-spacing:1.1px;color:var(--mint-600)}
+html[data-theme="dark"] #fab .fab-tag{color:var(--mint-ink)}
+</style>
+<style>
+/* ============ SHARED COMPONENTS ============ */
+/* Top app header inside screens */
+.app-head{display:flex;align-items:center;justify-content:space-between;padding:10px 20px 6px;gap:12px}
+.app-head .ah-title{font-family:var(--font-display);font-size:21px;font-weight:700;letter-spacing:-.3px}
+.app-head .ah-sub{font-size:12px;color:var(--text-2);margin-top:2px;font-weight:500}
+.icon-btn{width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;
+  background:var(--surface);border:1px solid var(--line);color:var(--text-2);position:relative;transition:.18s;flex-shrink:0}
+.icon-btn:active{transform:scale(.92)}
+.icon-btn svg{width:20px;height:20px}
+.icon-btn .dot{position:absolute;top:9px;right:10px;width:8px;height:8px;border-radius:50%;
+  background:var(--danger);border:2px solid var(--surface)}
+.avatar{width:40px;height:40px;border-radius:13px;background:linear-gradient(145deg,#123B52,var(--navy-800));
+  color:#8FF0CC;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);
+  font-weight:700;font-size:14px;border:1px solid var(--line);flex-shrink:0}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);padding:18px;box-shadow:var(--sh-1)}
+.card.tight{padding:14px 16px}
+.card-title{font-family:var(--font-display);font-size:14.5px;font-weight:700;letter-spacing:-.2px;display:flex;align-items:center;justify-content:space-between}
+.card-title .link{font-family:var(--font-ui);font-size:12px;font-weight:600;color:var(--mint-600);display:flex;align-items:center;gap:2px}
+html[data-theme="dark"] .card-title .link{color:var(--mint-ink)}
+.card-title .link svg{width:14px;height:14px}
+
+/* Buttons */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  padding:15px 18px;border-radius:15px;font-size:15px;font-weight:700;transition:.18s;letter-spacing:.1px}
+.btn:active{transform:scale(.975)}
+.btn svg{width:19px;height:19px}
+.btn-primary{background:linear-gradient(150deg,#00D495,#00A876);color:var(--on-mint);box-shadow:0 6px 16px rgba(0,195,137,.30)}
+.btn-dark{background:var(--navy-900);color:#F0F6F2}
+html[data-theme="dark"] .btn-dark{background:var(--surface-3);color:var(--text)}
+.btn-ghost{background:var(--surface);border:1.5px solid var(--line-strong);color:var(--text)}
+.btn-soft{background:var(--mint-tint);color:var(--mint-ink)}
+.btn-danger-soft{background:var(--danger-tint);color:var(--danger)}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.btn-sm{padding:10px 14px;font-size:13px;border-radius:12px;width:auto}
+
+/* Chips */
+.chip{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:99px;
+  font-size:11.5px;font-weight:600;background:var(--surface-2);color:var(--text-2)}
+.chip svg{width:13px;height:13px}
+.chip.mint{background:var(--mint-tint);color:var(--mint-ink)}
+.chip.gold{background:var(--gold-tint);color:var(--gold-ink)}
+.chip.danger{background:var(--danger-tint);color:var(--danger)}
+.chip.info{background:var(--info-tint);color:var(--info)}
+.chip-row{display:flex;gap:8px;flex-wrap:wrap}
+.chip-row.scroll{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;margin:0 -20px;padding-left:20px;padding-right:20px}
+.chip-row.scroll .chip{flex-shrink:0}
+.chip.select{padding:9px 15px;font-size:12.5px;border:1.5px solid var(--line);background:var(--surface)}
+.chip.select.on{background:var(--navy-900);color:#fff;border-color:var(--navy-900)}
+html[data-theme="dark"] .chip.select.on{background:var(--mint-600);border-color:var(--mint-600)}
+
+/* Progress bars */
+.bar{height:8px;border-radius:99px;background:var(--surface-3);overflow:hidden;position:relative}
+.bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--mint-500),var(--mint-600));transition:width .8s cubic-bezier(.22,.9,.3,1)}
+.bar.gold>i{background:linear-gradient(90deg,var(--gold-500),var(--gold-600))}
+.bar.slim{height:5px}
+
+/* Level pill */
+.lvl-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;
+  font-size:11.5px;font-weight:700;background:var(--navy-900);color:#fff}
+html[data-theme="dark"] .lvl-pill{background:var(--surface-3);color:var(--text)}
+.lvl-pill .dot-l{width:7px;height:7px;border-radius:50%;background:var(--mint-500)}
+
+/* Lists */
+.list{display:flex;flex-direction:column}
+.row-item{display:flex;align-items:center;gap:13px;padding:14px 2px;border-bottom:1px solid var(--line)}
+.row-item:last-child{border-bottom:none}
+.row-item .ri-icon{width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.row-item .ri-icon svg{width:19px;height:19px}
+.row-item .ri-main{flex:1;min-width:0}
+.row-item .ri-title{font-size:14px;font-weight:600;letter-spacing:-.1px}
+.row-item .ri-sub{font-size:12px;color:var(--text-2);margin-top:2px;line-height:1.45}
+.row-item .ri-end{text-align:right;font-size:13px;font-weight:700;flex-shrink:0}
+.row-item .ri-end .sub{font-size:11px;color:var(--text-3);font-weight:500}
+.row-item.chev::after{content:'';width:8px;height:8px;border-right:2px solid var(--text-3);border-top:2px solid var(--text-3);
+  transform:rotate(45deg);margin-left:2px;flex-shrink:0;opacity:.6}
+
+/* Hero progress ring */
+.ring-wrap{display:flex;flex-direction:column;align-items:center;position:relative}
+.ring{transform:rotate(-90deg)}
+.ring .trk{stroke:var(--surface-3)}
+.ring .val{stroke:url(#gradMint);stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(.22,.9,.3,1)}
+.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.ring-center .big{font-family:var(--font-display);font-size:40px;font-weight:800;letter-spacing:-1.5px;line-height:1}
+.ring-center .unit{font-size:12px;font-weight:600;color:var(--text-2);letter-spacing:.4px}
+
+/* Week bars */
+.wbars{display:flex;align-items:flex-end;gap:9px;height:86px;padding-top:6px}
+.wbar{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.wbar i{width:100%;max-width:26px;border-radius:7px;background:var(--surface-3);min-height:6px}
+.wbar.hit i{background:linear-gradient(180deg,#00D495,#00A876)}
+.wbar.today i{background:linear-gradient(180deg,var(--gold-500),var(--gold-600))}
+.wbar span{font-size:9.5px;font-weight:600;color:var(--text-3)}
+
+/* ============ ONBOARDING / AUTH ============ */
+.onb-hero{height:400px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;position:relative;overflow:hidden}
+.onb-art{width:210px;height:210px;border-radius:60px;background:var(--surface);border:1px solid var(--line);
+  box-shadow:var(--sh-2);display:flex;align-items:center;justify-content:center;position:relative}
+.onb-art .halo{position:absolute;width:260px;height:260px;border-radius:50%;border:1.5px dashed var(--line-strong);animation:spin 26s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.onb-art svg{width:104px;height:104px}
+.onb-dots{display:flex;gap:6px;justify-content:center;margin:6px 0 14px}
+.onb-dots i{width:7px;height:7px;border-radius:99px;background:var(--surface-3);transition:.25s}
+.onb-dots i.on{width:22px;background:var(--mint-500)}
+.onb-copy{text-align:center;padding:0 34px}
+.onb-copy h2{font-family:var(--font-display);font-size:24px;font-weight:800;letter-spacing:-.6px;line-height:1.22;margin-bottom:10px}
+.onb-copy p{font-size:14px;color:var(--text-2);line-height:1.65}
+.legal{font-size:10.5px;color:var(--text-3);line-height:1.6;text-align:center;padding:0 30px}
+.legal b{color:var(--text-2)}
+
+/* Permission cards */
+.perm-card{display:flex;gap:14px;padding:16px;border-radius:var(--r-l);background:var(--surface);
+  border:1px solid var(--line);margin-bottom:12px;align-items:flex-start}
+.perm-card .pc-icon{width:44px;height:44px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.perm-card .pc-icon svg{width:21px;height:21px}
+.perm-card h4{font-size:14.5px;font-weight:700;margin-bottom:3px}
+.perm-card p{font-size:12px;color:var(--text-2);line-height:1.55}
+.perm-state{margin-left:auto;flex-shrink:0}
+
+/* Goal select */
+.goal-opt{display:flex;align-items:center;gap:14px;padding:16px;border-radius:var(--r-l);
+  border:1.5px solid var(--line);background:var(--surface);margin-bottom:11px;transition:.15s;cursor:pointer}
+.goal-opt.on{border-color:var(--mint-500);background:var(--mint-tint);box-shadow:0 0 0 3px rgba(0,195,137,.12)}
+.goal-opt .g-main{flex:1}
+.goal-opt .g-main b{font-family:var(--font-display);font-size:16px;font-weight:700}
+.goal-opt .g-main span{display:block;font-size:11.5px;color:var(--text-2);margin-top:2px}
+.goal-opt .g-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--line-strong);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.goal-opt.on .g-check{background:var(--mint-500);border-color:var(--mint-500)}
+.goal-opt .g-check svg{width:12px;height:12px;color:#fff}
+
+/* ============ HOME ============ */
+.home-greet{padding:8px 20px 2px}
+.home-greet .hg-hi{font-size:13px;color:var(--text-2);font-weight:500}
+.home-greet .hg-name{font-family:var(--font-display);font-size:21px;font-weight:800;letter-spacing:-.4px;display:flex;align-items:center;gap:8px;margin-top:1px}
+.hero-card{margin:14px 20px 0;border-radius:var(--r-xl);padding:22px 18px 18px;position:relative;overflow:hidden;
+  background:linear-gradient(165deg,var(--surface) 0%,var(--surface) 55%,var(--mint-tint) 160%);border:1px solid var(--line);box-shadow:var(--sh-2)}
+.hero-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.hero-top .chip{background:var(--surface-2)}
+.ring-center .delta{font-size:11.5px;color:var(--text-2);font-weight:600}
+.hero-stats{display:flex;margin-top:14px;border-top:1px solid var(--line);padding-top:13px}
+.hstat{flex:1;text-align:center;position:relative}
+.hstat+.hstat::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:1px;background:var(--line)}
+.hstat b{font-family:var(--font-display);font-size:15.5px;font-weight:700;display:block;letter-spacing:-.3px}
+.hstat span{font-size:10px;color:var(--text-3);font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-top:2px;display:block}
+.hstat svg{width:13px;height:13px;display:inline-block;vertical-align:-2px;margin-right:2px}
+.hero-cta{margin-top:15px}
+
+/* coin card */
+.coin-card{margin:14px 20px 0;display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:var(--r-l);
+  background:linear-gradient(140deg,var(--navy-900),#15324A 130%);color:#F1F7F3;box-shadow:var(--sh-2);cursor:pointer;border:1px solid rgba(255,255,255,.06)}
+html[data-theme="dark"] .coin-card{background:linear-gradient(140deg,var(--surface-2),#0F1E2E 140%)}
+.coin-card .cc-coin{width:44px;height:44px;border-radius:50%;background:linear-gradient(145deg,#F6C445,#D89B16);
+  display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 4px rgba(255,255,255,.35),0 4px 10px rgba(240,180,41,.3)}
+.coin-card .cc-coin svg{width:22px;height:22px;color:#7A5610}
+.coin-card .cc-main{flex:1}
+.coin-card .cc-main .cc-bal{font-family:var(--font-display);font-size:21px;font-weight:800;letter-spacing:-.5px;line-height:1.1}
+.coin-card .cc-main .cc-bal small{font-size:11px;font-weight:600;color:#B9CDC5;margin-left:4px;letter-spacing:.3px}
+.coin-card .cc-main .cc-sub{font-size:11px;color:#AFC4BC;margin-top:3px;display:flex;align-items:center;gap:5px}
+.coin-card .cc-sub .puls{width:6px;height:6px;border-radius:50%;background:var(--gold-500)}
+.coin-card .cc-chev{opacity:.7}
+.cap-meter{margin:0 20px;margin-top:10px;padding:13px 16px;border-radius:var(--r-l);background:var(--surface);border:1px solid var(--line)}
+.cap-meter .cm-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.cap-meter .cm-row b{font-size:12.5px;font-weight:600}
+.cap-meter .cm-row span{font-size:11px;color:var(--text-3);font-weight:600}
+
+/* next action */
+.next-card{margin:14px 20px 0;border-radius:var(--r-l);border:1.5px dashed var(--line-strong);padding:15px 16px;display:flex;gap:13px;align-items:center;background:var(--surface)}
+.next-card .nc-icon{width:42px;height:42px;border-radius:14px;background:var(--gold-tint);color:var(--gold-ink);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.next-card .nc-icon svg{width:20px;height:20px}
+.next-card p{font-size:12.5px;line-height:1.5;color:var(--text-2)}
+.next-card p b{color:var(--text)}
+
+/* product mini cards (home) */
+.pmini-scroll{display:flex;gap:12px;overflow-x:auto;padding:2px 20px 6px;margin:0 -20px}
+.pmini{width:150px;flex-shrink:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);padding:12px;cursor:pointer;transition:.15s}
+.pmini:active{transform:scale(.97)}
+.pmini .pm-img{height:74px;border-radius:12px;margin-bottom:9px;display:flex;align-items:center;justify-content:center}
+.pmini .pm-img svg{width:30px;height:30px;opacity:.75}
+.pmini b{font-size:12px;font-weight:600;line-height:1.3;display:block;letter-spacing:-.1px}
+.pmini .pm-price{font-size:11px;font-weight:700;color:var(--gold-ink);margin-top:3px}
+.pmini .pm-prog{margin-top:7px}
+.pmini .pm-prog span{font-size:9.5px;color:var(--text-3);font-weight:600}
+
+/* ============ SESSION ============ */
+.session-top{padding:10px 20px 0;display:flex;align-items:center;justify-content:space-between}
+.session-pill{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:99px;background:var(--danger-tint);color:var(--danger);font-size:12px;font-weight:700}
+.session-pill .rec{width:8px;height:8px;border-radius:50%;background:var(--danger);animation:pulse 1.6s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.session-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 20px;margin-top:16px}
+.sstat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);padding:15px 16px}
+.sstat span{font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-3)}
+.sstat b{font-family:var(--font-display);font-size:23px;font-weight:800;letter-spacing:-.8px;display:block;margin-top:4px}
+.sstat b small{font-size:12px;font-weight:600;color:var(--text-2);letter-spacing:0}
+.session-map{margin:12px 20px 0;height:150px;border-radius:var(--r-l);border:1px solid var(--line);position:relative;overflow:hidden;
+  background:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:26px 26px;background-position:center}
+.session-map .route{position:absolute;inset:0}
+.session-map .map-tag{position:absolute;left:12px;bottom:12px;display:flex;gap:6px}
+.session-ctrl{position:absolute;left:0;right:0;bottom:20px;display:flex;justify-content:center;gap:16px;z-index:30}
+.ctrl-btn{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh-2);transition:.15s}
+.ctrl-btn:active{transform:scale(.92)}
+.ctrl-btn svg{width:25px;height:25px}
+.ctrl-btn.pause{background:var(--surface);border:1px solid var(--line);color:var(--text)}
+.ctrl-btn.end{width:auto;border-radius:99px;padding:0 26px;background:var(--danger);color:#fff;font-weight:700;font-size:14px;gap:7px}
+.ctrl-btn.end svg{width:18px;height:18px}
+.gps-warn{margin:12px 20px 0;display:flex;gap:9px;align-items:center;padding:10px 13px;border-radius:12px;background:var(--warn-tint);color:var(--warn-ink);font-size:11.5px;font-weight:600}
+.gps-warn svg{width:15px;height:15px;flex-shrink:0}
+
+/* Summary */
+.sum-hero{text-align:center;padding:26px 20px 6px}
+.sum-hero .sh-ring{width:118px;height:118px;margin:0 auto 14px;border-radius:50%;background:var(--mint-tint);
+  display:flex;align-items:center;justify-content:center;position:relative}
+.sum-hero .sh-ring::after{content:'';position:absolute;inset:-9px;border-radius:50%;border:1.5px dashed var(--mint-500);opacity:.5}
+.sum-hero .sh-ring svg{width:52px;height:52px;color:var(--mint-600)}
+.sum-hero h2{font-family:var(--font-display);font-size:23px;font-weight:800;letter-spacing:-.5px}
+.sum-hero p{font-size:13px;color:var(--text-2);margin-top:5px;line-height:1.5}
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:0 20px;margin-top:18px}
+.sum-cell{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:13px 15px}
+.sum-cell span{font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--text-3)}
+.sum-cell b{font-family:var(--font-display);font-size:19px;font-weight:800;letter-spacing:-.5px;display:block;margin-top:3px}
+.sum-cell b small{font-size:11px;color:var(--text-2);font-weight:600}
+.coin-earn{margin:14px 20px 0;display:flex;align-items:center;gap:12px;padding:15px 17px;border-radius:var(--r-l);background:var(--gold-tint);border:1px solid rgba(216,155,22,.25)}
+.coin-earn .ce-coin{width:38px;height:38px;border-radius:50%;background:linear-gradient(145deg,#F6C445,#D89B16);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.coin-earn .ce-coin svg{width:19px;height:19px;color:#7A5610}
+.coin-earn b{font-size:14px;font-weight:700;color:var(--gold-ink)}
+.coin-earn p{font-size:11.5px;color:var(--gold-ink);opacity:.85;margin-top:2px;line-height:1.45}
+
+/* ============ PROGRESS / LEVELS ============ */
+.lvl-path{position:relative;padding:6px 0}
+.lvl-node{display:flex;gap:14px;position:relative;padding-bottom:22px}
+.lvl-node:last-child{padding-bottom:0}
+.lvl-node::before{content:'';position:absolute;left:21px;top:44px;bottom:0;width:2.5px;background:var(--surface-3);border-radius:2px}
+.lvl-node.done::before,.lvl-node.current::before{background:linear-gradient(180deg,var(--mint-500),var(--mint-600))}
+.lvl-node:last-child::before{display:none}
+.lvl-badge{width:44px;height:44px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:var(--surface-3);color:var(--text-3);font-family:var(--font-display);font-weight:800;font-size:14px;position:relative;z-index:1;border:3px solid var(--surface)}
+.lvl-node.done .lvl-badge{background:linear-gradient(150deg,#00D495,#00A876);color:#fff}
+.lvl-node.current .lvl-badge{background:var(--navy-900);color:#fff;box-shadow:0 0 0 4px rgba(0,195,137,.25)}
+html[data-theme="dark"] .lvl-node.current .lvl-badge{background:var(--mint-600)}
+.lvl-node .ln-main{flex:1;padding-top:2px}
+.lvl-node .ln-name{font-size:14.5px;font-weight:700;display:flex;align-items:center;gap:8px}
+.lvl-node .ln-name .chip{font-size:9.5px;padding:3px 8px}
+.lvl-node .ln-sub{font-size:11.5px;color:var(--text-2);margin-top:2px;line-height:1.5}
+.lvl-node .ln-prog{margin-top:8px}
+.lvl-node .ln-prog span{font-size:10.5px;color:var(--text-3);font-weight:600}
+.lvl-locked{opacity:.55}
+
+/* badges grid */
+.badge-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;padding:0 20px}
+.badge{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:14px 10px;text-align:center}
+.badge .b-ic{width:46px;height:46px;margin:0 auto 8px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.badge .b-ic svg{width:22px;height:22px}
+.badge b{font-size:11px;font-weight:700;display:block;line-height:1.25}
+.badge span{font-size:9.5px;color:var(--text-3);font-weight:600;display:block;margin-top:3px;line-height:1.3}
+.badge.locked{opacity:.55}
+.badge .b-prog{margin-top:8px}
+
+/* leaderboard */
+.lb-podium{display:flex;align-items:flex-end;justify-content:center;gap:12px;padding:14px 20px 6px}
+.pod{flex:1;max-width:104px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:12px 8px;text-align:center}
+.pod .p-av{width:40px;height:40px;border-radius:50%;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;font-family:var(--font-display)}
+.pod b{font-size:11px;display:block;letter-spacing:-.1px}
+.pod span{font-size:10px;color:var(--text-2);font-weight:600}
+.pod .p-rank{font-size:10px;font-weight:800;margin-bottom:4px}
+.lb-row{display:flex;align-items:center;gap:12px;padding:11px 20px;border-bottom:1px solid var(--line)}
+.lb-row .lb-rank{width:22px;font-weight:800;font-size:13px;color:var(--text-3);text-align:center;flex-shrink:0}
+.lb-row .lb-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;flex-shrink:0}
+.lb-row .lb-name{flex:1;font-size:13.5px;font-weight:600;letter-spacing:-.1px}
+.lb-row .lb-name span{display:block;font-size:10.5px;color:var(--text-3);font-weight:500}
+.lb-row .lb-steps{font-size:13px;font-weight:700}
+.lb-row.me{background:var(--mint-tint)}
+.lb-row.me .lb-name::after{content:'You';font-size:9px;font-weight:800;background:var(--mint-500);color:#fff;border-radius:99px;padding:2px 7px;margin-left:7px;vertical-align:1px}
+
+/* challenges */
+.chal-card{margin:0 20px 13px;border-radius:var(--r-l);background:var(--surface);border:1px solid var(--line);padding:16px;box-shadow:var(--sh-1)}
+.chal-head{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.chal-head .ch-ic{width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chal-head .ch-ic svg{width:19px;height:19px}
+.chal-head b{font-size:14px;font-weight:700;display:block;letter-spacing:-.1px}
+.chal-head span{font-size:11px;color:var(--text-2)}
+.chal-head .rew{margin-left:auto;flex-shrink:0}
+.chal-foot{display:flex;align-items:center;justify-content:space-between;margin-top:11px}
+.chal-foot .cf-prog{flex:1;margin-right:12px}
+.chal-foot .cf-prog span{font-size:10.5px;color:var(--text-3);font-weight:600}
+.cal-dots{display:flex;gap:5px;margin-top:10px}
+.cal-dots i{flex:1;height:22px;border-radius:7px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;color:var(--text-3);font-style:normal}
+.cal-dots i.hit{background:var(--mint-tint);color:var(--mint-ink)}
+.cal-dots i.today{border:1.5px solid var(--gold-500);color:var(--gold-ink)}
+
+/* ============ WALLET ============ */
+.wallet-hero{margin:8px 20px 0;border-radius:var(--r-xl);padding:22px 20px;background:linear-gradient(155deg,var(--navy-900) 0%,#14344E 120%);
+  color:#F1F7F3;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.06);box-shadow:var(--sh-2)}
+html[data-theme="dark"] .wallet-hero{background:linear-gradient(155deg,var(--surface-2) 0%,#0E1D2D 130%)}
+.wallet-hero .wh-label{font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:#9FBCB0;display:flex;align-items:center;gap:6px}
+.wallet-hero .wh-bal{font-family:var(--font-display);font-size:42px;font-weight:800;letter-spacing:-1.5px;margin:8px 0 2px;display:flex;align-items:center;gap:10px}
+.wallet-hero .wh-bal svg{width:30px;height:30px;color:var(--gold-500)}
+.wallet-hero .wh-sub{font-size:12px;color:#AFC4BC;line-height:1.5}
+.wh-rows{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px}
+.wh-cell{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);border-radius:13px;padding:10px 13px}
+.wh-cell span{font-size:9.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:#9FBCB0}
+.wh-cell b{font-family:var(--font-display);font-size:15.5px;font-weight:700;display:block;margin-top:3px}
+.wallet-disc{margin:12px 20px 0;font-size:10.5px;color:var(--text-3);line-height:1.65;padding:0 4px}
+.wallet-disc b{color:var(--text-2)}
+.tx-item{display:flex;align-items:center;gap:13px;padding:13px 20px;border-bottom:1px solid var(--line)}
+.tx-item:last-child{border-bottom:none}
+.tx-item .tx-ic{width:38px;height:38px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.tx-item .tx-ic svg{width:17px;height:17px}
+.tx-item .tx-main{flex:1;min-width:0}
+.tx-item .tx-main b{font-size:13.5px;font-weight:600;display:block;letter-spacing:-.1px}
+.tx-item .tx-main span{font-size:11px;color:var(--text-3);display:block;margin-top:2px;line-height:1.4}
+.tx-item .tx-amt{font-size:14px;font-weight:800;flex-shrink:0;text-align:right}
+.tx-item .tx-amt .st{display:block;font-size:9.5px;font-weight:600;margin-top:3px}
+.amt-plus{color:var(--mint-600)}html[data-theme="dark"] .amt-plus{color:var(--mint-ink)}
+.amt-minus{color:var(--text)} 
+.st-ok{color:var(--mint-600)}html[data-theme="dark"] .st-ok{color:var(--mint-ink)}
+.st-pend{color:var(--gold-ink)}
+.st-fail{color:var(--danger)}
+
+/* ============ CATALOGUE / PRODUCT ============ */
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;padding:0 20px}
+.prod-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);overflow:hidden;cursor:pointer;transition:.16s;box-shadow:var(--sh-1)}
+.prod-card:active{transform:scale(.975)}
+.prod-card .pc-img{height:104px;display:flex;align-items:center;justify-content:center;position:relative}
+.prod-card .pc-img svg{width:38px;height:38px;opacity:.8}
+.prod-card .pc-img .stock{position:absolute;top:9px;left:9px}
+.prod-card .pc-body{padding:11px 13px 13px}
+.prod-card b{font-size:12.5px;font-weight:600;line-height:1.3;display:block;letter-spacing:-.1px;min-height:32px}
+.prod-card .pc-price{font-size:13px;font-weight:800;color:var(--gold-ink);margin-top:5px;display:flex;align-items:center;gap:4px}
+.prod-card .pc-price svg{width:13px;height:13px}
+.prod-card .pc-prog{margin-top:8px}
+.prod-card .pc-prog span{font-size:9.5px;color:var(--text-3);font-weight:600}
+.pd-hero{height:230px;display:flex;align-items:center;justify-content:center;position:relative}
+.pd-hero svg{width:84px;height:84px;opacity:.85}
+.pd-hero .pd-back{position:absolute;top:12px;left:16px}
+.pd-hero .pd-share{position:absolute;top:12px;right:16px}
+.pd-price-bar{display:flex;align-items:center;justify-content:space-between;padding:2px 20px 12px}
+.pd-price-bar .pd-price{font-family:var(--font-display);font-size:26px;font-weight:800;letter-spacing:-.8px;display:flex;align-items:center;gap:7px}
+.pd-price-bar .pd-price svg{width:22px;height:22px;color:var(--gold-ink)}
+.pd-price-bar .pd-eta{font-size:10.5px;color:var(--text-3);text-align:right;line-height:1.4;font-weight:600}
+.elig-check{display:flex;align-items:flex-start;gap:10px;padding:8px 0;font-size:12.5px;line-height:1.5}
+.elig-check svg{width:17px;height:17px;flex-shrink:0;margin-top:1px}
+.elig-check.ok svg{color:var(--mint-600)}html[data-theme="dark"] .elig-check.ok svg{color:var(--mint-ink)}
+.elig-check.no svg{color:var(--danger)}
+.elig-check.no{color:var(--text-2)}
+.pd-cta{position:sticky;bottom:0;left:0;right:0;padding:12px 20px 18px;z-index:10;
+  background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(14px)}
+.pd-cta .btn{box-shadow:var(--sh-2)}
+.pd-cta .need{font-size:11.5px;color:var(--text-2);text-align:center;margin-top:8px;font-weight:600}
+.acc-head{display:flex;align-items:center;justify-content:space-between;padding:15px 2px;cursor:pointer}
+.acc-head b{font-size:13.5px;font-weight:700}
+.acc-head svg{width:16px;height:16px;color:var(--text-3);transition:.2s}
+.acc-head.open svg{transform:rotate(180deg)}
+.acc-body{display:none;font-size:12px;color:var(--text-2);line-height:1.7;padding:0 2px 14px}
+.acc-body.open{display:block}
+
+/* redeem sheet + success */
+.sheet-wrap{position:absolute;inset:0;z-index:60;display:none}
+.sheet-wrap.show{display:block}
+.sheet-dim{position:absolute;inset:0;background:rgba(6,13,22,.55);opacity:0;transition:.28s}
+.sheet-wrap.show .sheet-dim{opacity:1}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:28px 28px 0 0;
+  padding:12px 22px 26px;transform:translateY(102%);transition:transform .34s cubic-bezier(.22,.9,.3,1);max-height:88%;overflow-y:auto}
+.sheet-wrap.show .sheet{transform:none}
+.sheet .grab{width:42px;height:5px;border-radius:99px;background:var(--line-strong);margin:0 auto 16px}
+.sheet h3{font-family:var(--font-display);font-size:19px;font-weight:800;letter-spacing:-.4px;margin-bottom:4px}
+.sheet .sub{font-size:12.5px;color:var(--text-2);margin-bottom:16px;line-height:1.5}
+.sum-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.sum-row:last-child{border-bottom:none}
+.sum-row span{color:var(--text-2)}
+.sum-row b{font-weight:700;display:flex;align-items:center;gap:5px}
+.sum-row b svg{width:15px;height:15px;color:var(--gold-ink)}
+.sum-row.total b{font-family:var(--font-display);font-size:17px;font-weight:800}
+.success-hero{text-align:center;padding:34px 24px 10px}
+.success-hero .s-ring{width:96px;height:96px;border-radius:50%;background:var(--mint-tint);margin:0 auto 18px;display:flex;align-items:center;justify-content:center;position:relative;animation:pop .5s cubic-bezier(.34,1.56,.64,1)}
+.success-hero .s-ring::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:2px solid var(--mint-500);opacity:.4}
+.success-hero .s-ring svg{width:44px;height:44px;color:var(--mint-600)}
+@keyframes pop{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+.success-hero h2{font-family:var(--font-display);font-size:23px;font-weight:800;letter-spacing:-.5px}
+.success-hero p{font-size:13px;color:var(--text-2);margin-top:6px;line-height:1.6}
+.order-id{display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:7px 14px;border-radius:99px;background:var(--surface-2);font-size:12px;font-weight:700;letter-spacing:.4px}
+.tl{padding:6px 0 0}
+.tl-item{display:flex;gap:13px;position:relative;padding-bottom:20px}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{content:'';position:absolute;left:11px;top:26px;bottom:0;width:2px;background:var(--surface-3)}
+.tl-item:last-child::before{display:none}
+.tl-item.done::before{background:var(--mint-500)}
+.tl-dot{width:24px;height:24px;border-radius:50%;background:var(--surface-3);flex-shrink:0;display:flex;align-items:center;justify-content:center;z-index:1;border:2.5px solid var(--surface)}
+.tl-item.done .tl-dot{background:var(--mint-500)}
+.tl-dot svg{width:12px;height:12px;color:#fff}
+.tl-item b{font-size:13.5px;font-weight:700;display:block}
+.tl-item span{font-size:11.5px;color:var(--text-2);line-height:1.5;display:block;margin-top:2px}
+
+/* orders */
+.order-card{margin:0 20px 13px;border-radius:var(--r-l);background:var(--surface);border:1px solid var(--line);padding:15px 16px;box-shadow:var(--sh-1)}
+.order-card .oc-head{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.order-card .oc-img{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.order-card .oc-img svg{width:21px;height:21px;opacity:.8}
+.order-card b{font-size:14px;font-weight:700;display:block;letter-spacing:-.1px}
+.order-card .oc-id{font-size:11px;color:var(--text-3);font-weight:500;margin-top:1px}
+.order-card .oc-foot{display:flex;align-items:center;justify-content:space-between;margin-top:4px}
+.order-card .oc-coins{font-size:12.5px;font-weight:700;color:var(--gold-ink);display:flex;align-items:center;gap:4px}
+.order-card .oc-coins svg{width:13px;height:13px}
+
+/* profile / settings */
+.prof-hero{display:flex;flex-direction:column;align-items:center;padding:22px 20px 8px;text-align:center}
+.prof-hero .p-av{width:84px;height:84px;border-radius:28px;background:linear-gradient(145deg,#123B52,var(--navy-800));
+  color:#8FF0CC;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:28px;
+  border:3px solid var(--surface);box-shadow:var(--sh-2)}
+.prof-hero h2{font-family:var(--font-display);font-size:20px;font-weight:800;margin-top:12px;letter-spacing:-.4px}
+.prof-hero .p-lvl{margin-top:7px}
+.prof-stats{display:flex;margin:18px 20px 0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);padding:15px 0}
+.pstat{flex:1;text-align:center;position:relative}
+.pstat+.pstat::before{content:'';position:absolute;left:0;top:5px;bottom:5px;width:1px;background:var(--line)}
+.pstat b{font-family:var(--font-display);font-size:17px;font-weight:800;display:block;letter-spacing:-.4px}
+.pstat span{font-size:10px;color:var(--text-3);font-weight:600;margin-top:2px;display:block}
+.set-group{margin:0 20px 14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);overflow:hidden}
+.set-row{display:flex;align-items:center;gap:13px;padding:14px 16px;border-bottom:1px solid var(--line);cursor:pointer}
+.set-row:last-child{border-bottom:none}
+.set-row:active{background:var(--surface-2)}
+.set-row .sr-ic{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.set-row .sr-ic svg{width:17px;height:17px}
+.set-row .sr-main{flex:1}
+.set-row .sr-main b{font-size:13.5px;font-weight:600;display:block;letter-spacing:-.1px}
+.set-row .sr-main span{font-size:11px;color:var(--text-3);display:block;margin-top:1px}
+.set-row .sr-end{font-size:12px;color:var(--text-3);font-weight:600;flex-shrink:0;display:flex;align-items:center;gap:6px}
+.toggle{width:46px;height:27px;border-radius:99px;background:var(--surface-3);position:relative;transition:.2s;flex-shrink:0}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:.2s}
+.toggle.on{background:var(--mint-500)}
+.toggle.on::after{left:22px}
+.radio-dot{width:20px;height:20px;border-radius:50%;border:2px solid var(--line-strong);flex-shrink:0;position:relative}
+.radio-dot.on{border-color:var(--mint-500)}
+.radio-dot.on::after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--mint-500)}
+
+/* notifications */
+.notif-item{display:flex;gap:13px;padding:15px 20px;border-bottom:1px solid var(--line);align-items:flex-start}
+.notif-item.unread{background:var(--mint-tint)}
+html[data-theme="dark"] .notif-item.unread{background:rgba(0,195,137,.07)}
+.notif-item .n-ic{width:38px;height:38px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.notif-item .n-ic svg{width:17px;height:17px}
+.notif-item b{font-size:13.5px;font-weight:600;display:block;letter-spacing:-.1px}
+.notif-item p{font-size:12px;color:var(--text-2);margin-top:2px;line-height:1.5}
+.notif-item .n-time{font-size:10.5px;color:var(--text-3);margin-top:5px;font-weight:500}
+
+/* ============ STATES GALLERY ============ */
+.state-label{margin:22px 20px 10px;font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--text-3);display:flex;align-items:center;gap:8px}
+.state-label::after{content:'';flex:1;height:1px;background:var(--line)}
+.state-note{margin:8px 20px 0;font-size:10.5px;color:var(--text-3);line-height:1.6}
+.empty-state{text-align:center;padding:28px 24px}
+.empty-state .es-ic{width:64px;height:64px;border-radius:22px;background:var(--surface-2);margin:0 auto 14px;display:flex;align-items:center;justify-content:center;color:var(--text-3)}
+.empty-state .es-ic svg{width:28px;height:28px}
+.empty-state b{font-size:14.5px;font-weight:700;display:block}
+.empty-state p{font-size:12px;color:var(--text-2);margin-top:5px;line-height:1.6}
+.offline-banner{margin:8px 20px 0;display:flex;gap:9px;align-items:center;padding:10px 14px;border-radius:12px;background:var(--warn-tint);color:var(--warn-ink);font-size:11.5px;font-weight:600}
+.offline-banner svg{width:15px;height:15px;flex-shrink:0}
+.skel{border-radius:10px;background:linear-gradient(90deg,var(--surface-2) 25%,var(--surface-3) 45%,var(--surface-2) 65%);
+  background-size:220% 100%;animation:shimmer 1.5s linear infinite}
+@keyframes shimmer{0%{background-position:120% 0}100%{background-position:-120% 0}}
+.toast{position:absolute;left:24px;right:24px;bottom:104px;z-index:80;background:var(--navy-900);color:#fff;
+  border-radius:14px;padding:13px 16px;font-size:12.5px;font-weight:600;display:flex;gap:10px;align-items:center;
+  box-shadow:var(--sh-3);opacity:0;transform:translateY(14px);transition:.3s;pointer-events:none}
+html[data-theme="dark"] .toast{background:var(--surface-3);border:1px solid var(--line-strong)}
+.toast.show{opacity:1;transform:none}
+.toast svg{width:17px;height:17px;color:var(--mint-500);flex-shrink:0}
+.section-h{padding:22px 20px 12px;font-family:var(--font-display);font-size:16.5px;font-weight:800;letter-spacing:-.3px}
+.section-h small{display:block;font-family:var(--font-ui);font-size:11.5px;color:var(--text-2);font-weight:500;margin-top:3px;letter-spacing:0}
+.fade-in{animation:screenIn .3s ease}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div id="stage">
+  <!-- ===== Desktop side panel ===== -->
+  <aside id="panel">
+    <div class="p-logo">
+      <div class="p-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#063D2C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="26" height="26"><path d="M4 17c3-1 4-4 4-7 0-2 1.4-3.5 3-3.5S14 8 14 10c0 4 2 6.5 5 7"/><circle cx="17.5" cy="17.5" r="1.6" fill="#063D2C" stroke="none"/></svg>
+      </div>
+      <h1>Steprivo <span>2.0</span></h1>
+    </div>
+    <p class="p-sub">Interactive prototype · Product &amp; UX design package for founder review. Every screen below is specified in the companion PDF specification.</p>
+    <div class="p-card">
+      <h3>Jump to a screen</h3>
+      <div class="p-links" id="quicklinks"></div>
+    </div>
+    <div class="p-card">
+      <h3>Demo controls</h3>
+      <div class="p-actions">
+        <button id="themeBtn">Toggle dark mode</button>
+        <button id="restartBtn">Replay onboarding</button>
+      </div>
+    </div>
+    <p class="p-note"><b>All data is illustrative.</b> Coin rates, level thresholds and catalogue prices are clearly-marked placeholders pending the final reward-economy decision. Products shown are generic demo items, not real SKUs. Coins are loyalty points with no cash value.</p>
+  </aside>
+
+  <!-- ===== Phone ===== -->
+  <div id="phone">
+    <div id="app">
+      <div class="notch"></div>
+      <div id="statusbar">
+        <span>9:41</span>
+        <div class="sb-icons">
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.3" y="4.5" width="3" height="7.5" rx="1"/><rect x="8.6" y="2" width="3" height="10" rx="1"/><rect x="12.9" y="0" width="3" height="12" rx="1" opacity=".35"/></svg>
+          <svg width="22" height="11" viewBox="0 0 22 11" fill="none"><rect x="0.5" y="0.5" width="18" height="10" rx="3" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="12" height="7" rx="1.6" fill="currentColor"/><rect x="19.5" y="3.5" width="2" height="4" rx="1" fill="currentColor" opacity=".4"/></svg>
+        </div>
+      </div>
+
+      <div id="screens">
+
+        <!-- ================= ONBOARDING ================= -->
+        <section class="screen" data-screen="onboard">
+          <div class="onb-hero">
+            <div class="onb-art">
+              <div class="halo"></div>
+              <!-- stride mark -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="url(#g1)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><defs><linearGradient id="g1" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#00A876"/><stop offset="1" stop-color="#00D495"/></linearGradient></defs><path d="M4 17c3-1 4-4 4-7 0-2 1.4-3.5 3-3.5S14 8 14 10c0 4 2 6.5 5 7"/><circle cx="19.6" cy="17.2" r="1.8" fill="#F0B429" stroke="none"/></svg>
+            </div>
+          </div>
+          <div class="onb-dots" id="onbDots"><i class="on"></i><i></i><i></i></div>
+          <div class="onb-copy">
+            <h2 id="onbTitle">Turn every step into progress</h2>
+            <p id="onbText">Steprivo tracks your steps automatically in the background. Watch your day fill the ring — no smartwatch needed, your phone is enough.</p>
+          </div>
+          <div class="pad" style="margin-top:26px">
+            <button class="btn btn-primary" id="onbNext">Continue</button>
+            <p class="legal" style="margin-top:14px">Free forever · Works offline · English, हिन्दी &amp; ಕನ್ನಡ planned</p>
+          </div>
+        </section>
+
+        <!-- ================= SIGN IN ================= -->
+        <section class="screen" data-screen="signin">
+          <div class="onb-hero" style="height:330px">
+            <div class="onb-art" style="width:150px;height:150px;border-radius:46px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00A876" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="72" height="72"><path d="M4 17c3-1 4-4 4-7 0-2 1.4-3.5 3-3.5S14 8 14 10c0 4 2 6.5 5 7"/><circle cx="19.6" cy="17.2" r="1.8" fill="#F0B429" stroke="none"/></svg>
+            </div>
+          </div>
+          <div class="onb-copy" style="padding:0 30px">
+            <h2 style="font-size:21px">Create your account</h2>
+            <p style="font-size:13px">One account keeps your steps, streaks and coins safe across devices.</p>
+          </div>
+          <div class="pad" style="margin-top:24px">
+            <button class="btn btn-dark" data-go="permissions">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M12 11v5" stroke-width="2.4"/></svg>
+              Continue with Google
+            </button>
+            <div style="display:flex;align-items:center;gap:12px;margin:16px 0"><i style="flex:1;height:1px;background:var(--line)"></i><span style="font-size:11px;color:var(--text-3);font-weight:600">OR</span><i style="flex:1;height:1px;background:var(--line)"></i></div>
+            <button class="btn btn-ghost" data-go="permissions">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 8 9 6 9-6"/></svg>
+              Continue with email
+            </button>
+            <button class="btn btn-soft" style="margin-top:12px" data-go="goal">Explore as guest</button>
+            <p class="legal" style="margin-top:16px">By continuing you agree to our <b>Terms</b> and <b>Privacy Policy</b>. Guests who sign in later keep all their steps and coins.</p>
+          </div>
+        </section>
+
+        <!-- ================= PERMISSIONS ================= -->
+        <section class="screen" data-screen="permissions">
+          <div class="app-head">
+            <div>
+              <div class="ah-title">Almost there</div>
+              <div class="ah-sub">Step 1 of 2 · Permissions</div>
+            </div>
+            <span class="chip" style="font-size:10.5px">Required</span>
+          </div>
+          <div class="pad" style="margin-top:12px">
+            <p style="font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:16px">Steprivo needs two permissions to count your walking and protect your streaks. You stay in control — change these anytime in Settings.</p>
+
+            <div class="perm-card">
+              <div class="pc-icon" style="background:var(--mint-tint);color:var(--mint-ink)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4.5 4.6 12.9c-.8.8-.2 2.1.9 2.1H11l-1 5.5 8.4-8.4c.8-.8.2-2.1-.9-2.1H12z"/></svg>
+              </div>
+              <div style="flex:1">
+                <h4>Physical activity</h4>
+                <p>Lets your phone count steps with its built-in motion sensor. Works even when the app is closed, using the battery-friendly step counter.</p>
+              </div>
+              <span class="perm-state chip mint">Recommended</span>
+            </div>
+
+            <div class="perm-card">
+              <div class="pc-icon" style="background:var(--info-tint);color:var(--info)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+              </div>
+              <div style="flex:1">
+                <h4>Notifications</h4>
+                <p>Streak reminders, milestone celebrations and reward updates. Max 2 per day — no spam, and never during a tracked walk.</p>
+              </div>
+              <span class="perm-state chip mint">Recommended</span>
+            </div>
+
+            <div class="perm-card" style="border-style:dashed">
+              <div class="pc-icon" style="background:var(--surface-2);color:var(--text-2)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21s-7-5.3-7-11a7 7 0 0 1 14 0c0 5.7-7 11-7 11z"/></svg>
+              </div>
+              <div style="flex:1">
+                <h4>Location <span style="font-weight:500;color:var(--text-3)">— only while walking</span></h4>
+                <p>Strictly optional. Used only to verify outdoor recorded walks. We never track your location in the background.</p>
+              </div>
+              <span class="perm-state chip">Optional</span>
+            </div>
+
+            <div class="card tight" style="margin-top:4px;display:flex;gap:12px;align-items:center">
+              <div class="pc-icon" style="width:40px;height:40px;border-radius:12px;background:var(--surface-2);color:var(--text-2);display:flex;align-items:center;justify-content:center">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M12 3v4M5 7l2.5 2.5M19 7l-2.5 2.5M12 21a6 6 0 0 0 6-6H6a6 6 0 0 0 6 6z"/></svg>
+              </div>
+              <div style="flex:1">
+                <b style="font-size:12.5px">Health Connect</b>
+                <p style="font-size:11px;color:var(--text-2);margin-top:1px;line-height:1.5">If installed, we read verified steps from Health Connect and sync your walks to it.</p>
+              </div>
+              <span class="chip">Detect at setup</span>
+            </div>
+
+            <button class="btn btn-primary" style="margin-top:18px" data-go="goal">Allow &amp; continue</button>
+            <button class="btn btn-ghost" style="margin-top:10px" data-go="goal">Not now — set up later</button>
+          </div>
+        </section>
+
+        <!-- ================= GOAL ================= -->
+        <section class="screen" data-screen="goal">
+          <div class="app-head">
+            <div>
+              <div class="ah-title">Pick a daily goal</div>
+              <div class="ah-sub">Step 2 of 2 · Your goal can change anytime</div>
+            </div>
+          </div>
+          <div class="pad" style="margin-top:12px">
+            <p style="font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:16px">We recommend starting smaller than you think. Consistency beats intensity — you can raise the goal whenever you're ready.</p>
+            <div class="goal-opt" data-goal="5000">
+              <div class="g-main"><b>5,000 steps</b><span>Gentle start · about 3.5 km</span></div>
+              <div class="g-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg></div>
+            </div>
+            <div class="goal-opt" data-goal="6000">
+              <div class="g-main"><b>6,000 steps</b><span>Everyday active · about 4.2 km</span></div>
+              <div class="g-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg></div>
+            </div>
+            <div class="goal-opt on" data-goal="10000">
+              <div class="g-main"><b>10,000 steps</b><span>WHO-inspired classic · about 7 km</span></div>
+              <div class="g-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg></div>
+            </div>
+            <div class="goal-opt" data-goal="12500">
+              <div class="g-main"><b>12,500 steps</b><span>Ambitious · about 9 km</span></div>
+              <div class="g-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg></div>
+            </div>
+            <button class="btn btn-primary" style="margin-top:18px" data-go="home">Start walking</button>
+            <p class="legal" style="margin-top:14px">New walkers get a <b>14-day Beginner Ramp</b>: a lower personal target and protected streaks while the habit forms.</p>
+          </div>
+        </section>
+
+        <!-- global svg defs -->
+        <svg width="0" height="0" style="position:absolute"><defs>
+          <linearGradient id="gradMint" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#00A876"/><stop offset="1" stop-color="#00D495"/></linearGradient>
+          <linearGradient id="gradGold" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#D89B16"/><stop offset="1" stop-color="#F6C445"/></linearGradient>
+        </defs></svg>
+
+        <!-- ================= HOME ================= -->
+        <section class="screen" data-screen="home">
+          <div class="app-head">
+            <div class="home-greet" style="padding:0">
+              <div class="hg-hi" id="greetLine">Good morning</div>
+              <div class="hg-name">Arjun <span class="lvl-pill" style="margin-left:2px"><span class="dot-l"></span>Level 3 · Strider</span></div>
+            </div>
+            <button class="icon-btn" data-go="notifications" aria-label="Notifications">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+              <span class="dot"></span>
+            </button>
+            <button class="avatar" data-go="profile" aria-label="Profile">A</button>
+          </div>
+
+          <!-- hero progress -->
+          <div class="hero-card">
+            <div class="hero-top">
+              <span class="chip" style="background:var(--surface-2)">TODAY · WED 15 OCT</span>
+              <span class="chip mint"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 6.2L21 9l-5 4.4L17.5 20 12 16.6 6.5 20 8 13.4 3 9l6.6-.8z"/></svg>Streak 14</span>
+            </div>
+            <div class="ring-wrap" style="margin-top:8px">
+              <svg class="ring" width="212" height="212" viewBox="0 0 212 212">
+                <circle class="trk" cx="106" cy="106" r="88" fill="none" stroke-width="15"/>
+                <circle class="val" data-ring="0.841" cx="106" cy="106" r="88" fill="none" stroke-width="15" stroke-dasharray="552.9" stroke-dashoffset="552.9"/>
+              </svg>
+              <div class="ring-center">
+                <div class="big" data-count="8412">0</div>
+                <div class="unit">of 10,000 steps</div>
+                <div class="delta">1,588 to close the ring</div>
+              </div>
+            </div>
+            <div class="hero-stats">
+              <div class="hstat"><b>6.1 <small style="font-size:10px">km</small></b><span>Distance</span></div>
+              <div class="hstat"><b>78 <small style="font-size:10px">min</small></b><span>Active</span></div>
+              <div class="hstat"><b style="color:var(--gold-ink)">+8</b><span>Coins</span></div>
+            </div>
+            <div class="hero-cta"><button class="btn btn-primary" data-go="walkprep">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17c3-1 4-4 4-7 0-2 1.4-3.5 3-3.5S14 8 14 10c0 4 2 6.5 5 7"/></svg>
+              Start a verified walk</button></div>
+          </div>
+
+          <!-- wallet preview -->
+          <div class="coin-card" data-go="wallet">
+            <div class="cc-coin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9M9.5 9.8c0-1 1.1-1.6 2.5-1.6s2.5.6 2.5 1.6c0 2.4-5 1.6-5 4 0 1 1.1 1.7 2.5 1.7s2.5-.7 2.5-1.7"/></svg></div>
+            <div class="cc-main">
+              <div class="cc-bal">1,246 <small>coins available</small></div>
+              <div class="cc-sub"><span class="puls"></span>+8 today · 18 verifying</div>
+            </div>
+            <svg class="cc-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" width="20" height="20"><path d="m9 6 6 6-6 6"/></svg>
+          </div>
+          <div class="cap-meter">
+            <div class="cm-row"><b>Walking coins today</b><span>8 of 25 daily cap</span></div>
+            <div class="bar"><i style="width:32%"></i></div>
+          </div>
+
+          <!-- next best action -->
+          <div class="next-card">
+            <div class="nc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg></div>
+            <p><b>1,588 steps from today's 10K.</b> An evening walk of about 20 minutes usually closes it — your streak and Level 3 progress are safe.</p>
+          </div>
+
+          <!-- daily challenge -->
+          <div class="chal-card" style="margin-top:14px" data-go="challenges">
+            <div class="chal-head">
+              <div class="ch-ic" style="background:var(--mint-tint);color:var(--mint-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.5 9-4 6-3-3.4"/></svg></div>
+              <div><b>Today's challenge · Walk 8,000 steps</b><span>Ends at midnight · auto-tracked</span></div>
+              <span class="rew chip gold">+40</span>
+            </div>
+            <div class="chal-foot">
+              <div class="cf-prog"><div class="bar slim"><i style="width:84%"></i></div><span style="display:block;margin-top:5px">6,750 / 8,000 counted steps</span></div>
+              <span class="chip">Details</span>
+            </div>
+          </div>
+
+          <!-- weekly bars -->
+          <div class="card" style="margin:0 20px">
+            <div class="card-title">This week <span class="link" data-go="progress">Stats <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span></div>
+            <div class="wbars" style="margin-top:12px">
+              <div class="wbar hit"><i style="height:58%"></i><span>M</span></div>
+              <div class="wbar hit"><i style="height:82%"></i><span>T</span></div>
+              <div class="wbar"><i style="height:47%"></i><span>W</span></div>
+              <div class="wbar hit"><i style="height:92%"></i><span>T</span></div>
+              <div class="wbar hit"><i style="height:66%"></i><span>F</span></div>
+              <div class="wbar"><i style="height:38%"></i><span>S</span></div>
+              <div class="wbar today"><i style="height:54%"></i><span>S</span></div>
+            </div>
+          </div>
+
+          <!-- rewards teaser -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:22px 20px 12px">
+            <div class="card-title">Closest rewards</div>
+            <span class="link" style="font-size:12px;font-weight:600;color:var(--mint-600)" data-go="catalogue">Browse all</span>
+          </div>
+          <div class="pmini-scroll">
+            <div class="pmini" data-go="product" data-pid="bottle">
+              <div class="pm-img" style="background:var(--mint-tint)"><svg viewBox="0 0 24 24" fill="none" stroke="#007A56" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v3.2c1.8 1 3 2.9 3 5.05V19a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-7.75c0-2.15 1.2-4.05 3-5.05z"/><path d="M6.4 13h11.2"/></svg></div>
+              <b>Steel Bottle 1L</b>
+              <div class="pm-price">900 coins</div>
+              <div class="pm-prog"><div class="bar slim gold"><i style="width:100%"></i></div><span>Ready to redeem</span></div>
+            </div>
+            <div class="pmini" data-go="product" data-pid="earbuds">
+              <div class="pm-img" style="background:var(--info-tint)"><svg viewBox="0 0 24 24" fill="none" stroke="#3D7DC8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13a8 8 0 0 1 16 0"/><rect x="3" y="13" width="4" height="7" rx="2"/><rect x="17" y="13" width="4" height="7" rx="2"/></svg></div>
+              <b>TWS Earbuds IPX5</b>
+              <div class="pm-price">5,500 coins</div>
+              <div class="pm-prog"><div class="bar slim"><i style="width:23%"></i></div><span>1,246 / 5,500</span></div>
+            </div>
+            <div class="pmini" data-go="product" data-pid="watch">
+              <div class="pm-img" style="background:var(--gold-tint)"><svg viewBox="0 0 24 24" fill="none" stroke="#8A6116" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="6.5" width="10" height="11" rx="3.2"/><path d="M9.5 3.5h5l.6 3M9.5 20.5h5l.6-3M12 10.5v2.5l1.8 1"/></svg></div>
+              <b>Smartwatch AMOLED</b>
+              <div class="pm-price">14,000 coins</div>
+              <div class="pm-prog"><div class="bar slim"><i style="width:9%"></i></div><span>9% there</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= SESSION ================= -->
+        <section class="screen" data-screen="session" style="padding-bottom:0">
+          <div class="session-top">
+            <button class="icon-btn" data-back="home" aria-label="End view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+            <div style="text-align:center">
+              <b style="font-family:var(--font-display);font-size:15px">Verified Walk</b>
+              <div style="font-size:10.5px;color:var(--text-3);font-weight:600" id="sessMode">OUTDOOR · GPS VERIFIED</div>
+            </div>
+            <span class="session-pill"><span class="rec"></span>LIVE</span>
+          </div>
+
+          <div class="ring-wrap" style="margin-top:12px">
+            <svg class="ring" width="196" height="196" viewBox="0 0 196 196">
+              <circle class="trk" cx="98" cy="98" r="84" fill="none" stroke-width="12"/>
+              <circle class="val" id="sessRing" cx="98" cy="98" r="84" fill="none" stroke-width="12" stroke-dasharray="527.8" stroke-dashoffset="527.8"/>
+            </svg>
+            <div class="ring-center">
+              <div class="big" style="font-size:36px" id="sessTime">00:00</div>
+              <div class="unit">of 30 min goal</div>
+            </div>
+          </div>
+
+          <div class="session-stats">
+            <div class="sstat"><span>Steps</span><b id="sessSteps">0</b></div>
+            <div class="sstat"><span>Distance</span><b id="sessDist">0.00 <small>km</small></b></div>
+            <div class="sstat"><span>Pace</span><b id="sessPace">— <small>/km</small></b></div>
+            <div class="sstat"><span>Coins earned</span><b style="color:var(--gold-ink)" id="sessCoins">+0</b></div>
+          </div>
+
+          <div class="session-map">
+            <svg class="route" viewBox="0 0 353 150" fill="none" preserveAspectRatio="none">
+              <path d="M28 118 C70 96 66 52 110 48 S186 84 224 62 268 22 322 40" stroke="var(--mint-500)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="7 8" opacity=".9"/>
+              <circle cx="28" cy="118" r="6" fill="var(--mint-600)"/><circle cx="322" cy="40" r="6" fill="var(--gold-500)"/>
+            </svg>
+            <div class="map-tag">
+              <span class="chip" style="background:var(--surface);color:var(--text-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" stroke-linecap="round"><circle cx="12" cy="10" r="3"/><path d="M12 21s-7-5.3-7-11a7 7 0 0 1 14 0c0 5.7-7 11-7 11z"/></svg>GPS lock: strong</span>
+              <span class="chip" style="background:var(--surface);color:var(--text-2)">Route drawn after walk</span>
+            </div>
+          </div>
+
+          <div class="gps-warn" id="gpsWarn" style="display:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+            Weak GPS signal — steps still count, route may be less accurate.
+          </div>
+
+          <div class="session-ctrl">
+            <button class="ctrl-btn pause" id="pauseBtn" aria-label="Pause">
+              <svg id="pauseIco" viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="5" width="3.6" height="14" rx="1.4"/><rect x="13.4" y="5" width="3.6" height="14" rx="1.4"/></svg>
+            </button>
+            <button class="ctrl-btn end" id="endBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/></svg>
+              Finish
+            </button>
+          </div>
+        </section>
+
+        <!-- ================= SUMMARY ================= -->
+        <section class="screen" data-screen="summary">
+          <div class="sum-hero">
+            <div class="sh-ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg></div>
+            <h2>Nice walk, Arjun!</h2>
+            <p>You walked <b>32 minutes</b> and closed most of today's gap.<br>Your streak continues — day 14.</p>
+          </div>
+          <div class="sum-grid">
+            <div class="sum-cell"><span>Steps</span><b>6,842</b></div>
+            <div class="sum-cell"><span>Distance</span><b>4.92 <small>km</small></b></div>
+            <div class="sum-cell"><span>Time</span><b>32:14</b></div>
+            <div class="sum-cell"><span>Pace</span><b>12'26" <small>/km</small></b></div>
+          </div>
+          <div class="coin-earn">
+            <div class="ce-coin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9M9.5 9.8c0-1 1.1-1.6 2.5-1.6s2.5.6 2.5 1.6c0 2.4-5 1.6-5 4 0 1 1.1 1.7 2.5 1.7s2.5-.7 2.5-1.7"/></svg></div>
+            <div><b>+6 coins earned</b><p>Added as <b>pending verification</b>. Coins confirm after server checks — usually within an hour. Walking cap: 8 / 25 today.</p></div>
+          </div>
+          <div class="card" style="margin:14px 20px 0">
+            <div class="card-title">Where this counts</div>
+            <div class="list" style="margin-top:4px">
+              <div class="row-item"><div class="ri-icon" style="background:var(--mint-tint);color:var(--mint-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a7 7 0 1 0 0-14 7 7 0 0 0 0 14z" transform="translate(0,2)"/><path d="m8.2 21.5 1.5-4.5M15.8 21.5l-1.5-4.5" /></svg></div><div class="ri-main"><div class="ri-title">Level 3 · Strider progress</div><div class="ri-sub">5 of 7 qualifying days this week — promotion ahead of pace</div></div></div>
+              <div class="row-item"><div class="ri-icon" style="background:var(--gold-tint);color:var(--gold-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M6 4h12v4a6 6 0 0 1-12 0z"/><path d="M6 6H4a2 2 0 0 0 0 4h2M18 6h2a2 2 0 0 1 0 4h-2"/></svg></div><div class="ri-main"><div class="ri-title">Today's challenge · 84%</div><div class="ri-sub">1,250 steps to claim +40 coins</div></div></div>
+              <div class="row-item"><div class="ri-icon" style="background:var(--info-tint);color:var(--info)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9.8 22l8.7-11.5H12z"/></svg></div><div class="ri-main"><div class="ri-title">Personal record check</div><div class="ri-sub">86 steps short of your best Wednesday</div></div></div>
+            </div>
+          </div>          <div class="pad" style="margin-top:18px">
+            <button class="btn btn-primary" data-go="home">Done</button>
+            <button class="btn btn-ghost" style="margin-top:10px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="6" r="2.6"/><circle cx="18" cy="18" r="2.6"/><path d="m8.3 10.8 7.4-3.6M8.3 13.2l7.4 3.6"/></svg>
+              Share this walk
+            </button>
+          </div>
+        </section>
+
+        <!-- ================= PROGRESS (LEVELS) ================= -->
+        <section class="screen" data-screen="progress">
+          <div class="app-head">
+            <div>
+              <div class="ah-title">Progress</div>
+              <div class="ah-sub">Levels · Stats · Records</div>
+            </div>
+            <button class="icon-btn" data-go="leaderboard" aria-label="Leaderboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 5H4.5a1.5 1.5 0 0 0 0 5H7M17 5h2.5a1.5 1.5 0 0 1 0 5H17"/></svg></button>
+          </div>
+
+          <!-- weekly summary strip -->
+          <div class="card" style="margin:8px 20px 0">
+            <div class="card-title">This week <span class="chip mint" style="font-size:10px">5 goal days</span></div>
+            <div class="wbars" style="height:72px;margin-top:10px">
+              <div class="wbar hit"><i style="height:58%"></i><span>M</span></div>
+              <div class="wbar hit"><i style="height:82%"></i><span>T</span></div>
+              <div class="wbar"><i style="height:47%"></i><span>W</span></div>
+              <div class="wbar hit"><i style="height:92%"></i><span>T</span></div>
+              <div class="wbar hit"><i style="height:66%"></i><span>F</span></div>
+              <div class="wbar"><i style="height:38%"></i><span>S</span></div>
+              <div class="wbar today"><i style="height:54%"></i><span>S</span></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">
+              <div><b style="font-family:var(--font-display);font-size:16px;font-weight:800">65,772</b><div style="font-size:10.5px;color:var(--text-3);font-weight:600">STEPS THIS WEEK</div></div>
+              <div style="text-align:right"><b style="font-family:var(--font-display);font-size:16px;font-weight:800;color:var(--mint-600)">+11.4%</b><div style="font-size:10.5px;color:var(--text-3);font-weight:600">VS LAST WEEK</div></div>
+            </div>
+          </div>
+
+          <div class="section-h">Walking levels <small>Hit your level's milestone on 4 of the last 7 days to advance</small></div>
+          <div class="card" style="margin:0 20px">
+            <div class="lvl-path">
+              <div class="lvl-node done">
+                <div class="lvl-badge">1</div>
+                <div class="ln-main">
+                  <div class="ln-name">Starter <span class="chip mint">5,000 / day</span></div>
+                  <div class="ln-sub">Where everyone begins. Beginner Ramp protects first 14 days.</div>
+                </div>
+              </div>
+              <div class="lvl-node done">
+                <div class="lvl-badge">2</div>
+                <div class="ln-main">
+                  <div class="ln-name">Stepper <span class="chip mint">8,000 / day</span></div>
+                  <div class="ln-sub">Unlocked Oct 2 · reached in 9 days</div>
+                </div>
+              </div>
+              <div class="lvl-node current">
+                <div class="lvl-badge">3</div>
+                <div class="ln-main">
+                  <div class="ln-name">Strider <span class="chip gold">Current</span></div>
+                  <div class="ln-sub">Daily milestone: 10,000 steps.</div>
+                  <div class="ln-prog">
+                    <div class="bar slim"><i style="width:71%"></i></div>
+                    <span style="display:block;margin-top:5px">5 of 7 qualifying days · 2 more days at 10K unlocks Trekker</span>
+                  </div>
+                </div>
+              </div>
+              <div class="lvl-node lvl-locked">
+                <div class="lvl-badge">4</div>
+                <div class="ln-main">
+                  <div class="ln-name">Trekker <span class="chip">12,500 / day</span></div>
+                  <div class="ln-sub">Unlocks premium challenge tier and badge frame.</div>
+                </div>
+              </div>
+              <div class="lvl-node lvl-locked">
+                <div class="lvl-badge">5</div>
+                <div class="ln-main">
+                  <div class="ln-name">Summit <span class="chip">15,000 / day</span></div>
+                  <div class="ln-sub">Top tier. Summit-only monthly mission + profile crest.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin:14px 20px 0;display:flex;gap:12px;align-items:flex-start;background:var(--surface)">
+            <div class="pc-icon" style="width:38px;height:38px;border-radius:12px;background:var(--info-tint);color:var(--info);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><path d="M12 16v-4M12 8h.01"/><circle cx="12" cy="12" r="9"/></svg></div>
+            <p style="font-size:11.5px;color:var(--text-2);line-height:1.65"><b style="color:var(--text)">Consistency, not punishment.</b> If life gets busy, your level drops by at most one tier after 14 low-activity days — never straight to the bottom, and never your coins or badges. Rest days never break progress.</p>
+          </div>
+
+          <div class="section-h">Personal records</div>
+          <div class="card" style="margin:0 20px">
+            <div class="list">
+              <div class="row-item"><div class="ri-icon" style="background:var(--gold-tint);color:var(--gold-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9.8 22l8.7-11.5H12z"/></svg></div><div class="ri-main"><div class="ri-title">Longest streak</div><div class="ri-sub">21 days · May 2026</div></div><div class="ri-end">21</div></div>
+              <div class="row-item"><div class="ri-icon" style="background:var(--mint-tint);color:var(--mint-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-6 4 3 6-8"/><path d="M18 6h3v3"/></svg></div><div class="ri-main"><div class="ri-title">Best day</div><div class="ri-sub">Jul 14 · family trek day</div></div><div class="ri-end">18,402</div></div>
+              <div class="row-item"><div class="ri-icon" style="background:var(--info-tint);color:var(--info)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M3 12h18" opacity="0"/><path d="M4 20V10M10 20V4M16 20v-8M22 20v-13" opacity="0"/><path d="M5 20v-6M11 20V8M17 20v-9M21 20H3"/></svg></div><div class="ri-main"><div class="ri-title">Lifetime steps</div><div class="ri-sub">Since March 2026</div></div><div class="ri-end">3.21M</div></div>
+            </div>
+          </div>
+
+          <div class="pad" style="margin-top:16px">
+            <div style="display:flex;gap:11px">
+              <button class="btn btn-soft" data-go="badges">Badges &amp; collections</button>
+              <button class="btn btn-soft" data-go="leaderboard">Leaderboard</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= BADGES ================= -->
+        <section class="screen" data-screen="badges">
+          <div class="app-head">
+            <button class="icon-btn" data-back="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button>
+            <div style="text-align:center"><b style="font-family:var(--font-display);font-size:16px">Achievements</b><div style="font-size:11px;color:var(--text-3);font-weight:500">12 of 34 earned</div></div>
+            <span style="width:40px"></span>
+          </div>
+          <div class="chip-row scroll" style="margin-top:8px">
+            <span class="chip select on">All</span><span class="chip select">Milestones</span><span class="chip select">Streaks</span><span class="chip select">Challenges</span><span class="chip select">Special</span>
+          </div>
+          <div class="section-h">Milestones</div>
+          <div class="badge-grid">
+            <div class="badge"><div class="b-ic" style="background:var(--mint-tint);color:var(--mint-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg></div><b>First Steps</b><span>1,000 steps</span></div>
+            <div class="badge"><div class="b-ic" style="background:var(--mint-tint);color:var(--mint-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.5 9-4 6-3-3.4"/></svg></div><b>10K Club</b><span>10,000 in a day</span></div>
+            <div class="badge"><div class="b-ic" style="background:var(--mint-tint);color:var(--mint-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M8 3v5M16 3v5M8 12h8"/></svg></div><b>50K Week</b><span>In 7 days</span></div>
+            <div class="badge locked"><div class="b-ic" style="background:var(--surface-2);color:var(--text-3)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div><b>100K Month</b><span>68% there</span><div class="b-prog"><div class="bar slim gold"><i style="width:68%"></i></div></div></div>
+            <div class="badge locked"><div class="b-ic" style="background:var(--surface-2);color:var(--text-3)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.4 6.2L21 9.7l-5 4.4 1.5 6.6L12 17.3 6.5 20.7 8 14.1 3 9.7l6.6-.5z"/></svg></div><b>Step Millionaire</b><span>1M lifetime</span><div class="b-prog"><div class="bar slim gold"><i style="width:32%"></i></div></div></div>
+            <div class="badge locked"><div class="b-ic" style="background:var(--surface-2);color:var(--text-3)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/></svg></div><b>Summit Tier</b><span>Reach Level 5</span></div>
+          </div>
+          <div class="section-h">Streaks</div>
+          <div class="badge-grid">
+            <div class="badge"><div class="b-ic" style="background:var(--gold-tint);color:var(--gold-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 4-3 5-3 9a3 3 0 0 0 6 .3C15 8 18 7.5 18 12a6 6 0 1 1-12 0c0-4.5 4-6 6-10z"/></svg></div><b>Week Warrior</b><span>7-day streak</span></div>
+            <div class="badge"><div class="b-ic" style="background:var(--gold-tint);color:var(--gold-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 4-3 5-3 9a3 3 0 0 0 6 .3C15 8 18 7.5 18 12a6 6 0 1 1-12 0c0-4.5 4-6 6-10z"/><path d="M12 21v.01" opacity="0"/></svg></div><b>Fortnight</b><span>14-day streak</span></div>
+            <div class="badge locked"><div class="b-ic" style="background:var(--surface-2);color:var(--text-3)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div><b>Monthly Fire</b><span>30-day streak</span></div>
+          </div>
+        </section>
+
+        <!-- ================= LEADERBOARD ================= -->
+        <section class="screen" data-screen="leaderboard">
+          <div class="app-head">
+            <button class="icon-btn" data-back="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button>
+            <div style="text-align:center"><b style="font-family:var(--font-display);font-size:16px">Mint League</b><div style="font-size:11px;color:var(--text-3);font-weight:500">Weekly · 128 walkers</div></div>
+            <span style="width:40px"></span>
+          </div>
+          <div class="chip-row" style="justify-content:center;margin-top:6px">
+            <span class="chip select on" style="font-size:11px">This week</span><span class="chip select" style="font-size:11px">All time</span>
+          </div>
+          <div class="lb-podium">
+            <div class="pod" style="opacity:.92">
+              <div class="p-rank" style="color:var(--text-3)">2</div>
+              <div class="p-av" style="background:var(--info-tint);color:var(--info)">PK</div>
+              <b>Priya K.</b><span>71,204</span>
+            </div>
+            <div class="pod" style="transform:translateY(-8px);box-shadow:var(--sh-2)">
+              <div class="p-rank" style="color:var(--gold-ink)">1</div>
+              <div class="p-av" style="background:var(--gold-tint);color:var(--gold-ink)">RS</div>
+              <b>Rahul S.</b><span>78,910</span>
+            </div>
+            <div class="pod" style="opacity:.92">
+              <div class="p-rank" style="color:var(--text-3)">3</div>
+              <div class="p-av" style="background:var(--mint-tint);color:var(--mint-ink)">MD</div>
+              <b>Meera D.</b><span>68,551</span>
+            </div>
+          </div>
+          <div style="margin-top:8px">
+            <div class="lb-row"><span class="lb-rank">12</span><div class="lb-av" style="background:var(--surface-2);color:var(--text-2)">AT</div><div class="lb-name">Aditya T.<span>Bengaluru</span></div><span class="lb-steps">56,402</span></div>
+            <div class="lb-row"><span class="lb-rank">13</span><div class="lb-av" style="background:var(--surface-2);color:var(--text-2)">SN</div><div class="lb-name">Sana N.<span>Mysuru</span></div><span class="lb-steps">54,980</span></div>
+            <div class="lb-row me"><span class="lb-rank" style="color:var(--mint-ink)">14</span><div class="lb-av" style="background:var(--mint-500);color:#fff">A</div><div class="lb-name">Arjun M.<span>Your best week yet</span></div><span class="lb-steps">52,404</span></div>
+            <div class="lb-row"><span class="lb-rank">15</span><div class="lb-av" style="background:var(--surface-2);color:var(--text-2)">KV</div><div class="lb-name">Kiran V.<span>Hubballi</span></div><span class="lb-steps">51,220</span></div>
+            <div class="lb-row"><span class="lb-rank">16</span><div class="lb-av" style="background:var(--surface-2);color:var(--text-2)">DJ</div><div class="lb-name">Divya J.<span>Mangaluru</span></div><span class="lb-steps">49,875</span></div>
+          </div>
+          <div class="card tight" style="margin:16px 20px 0;display:flex;gap:11px;align-items:center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2" stroke-linecap="round" width="17" height="17"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+            <p style="font-size:11px;color:var(--text-2);line-height:1.6">Only steps, never coins, are compared. Friend challenges arrive in a later version. We never show your precise location.</p>
+          </div>
+        </section>
+
+        <!-- ================= CHALLENGES ================= -->
+        <section class="screen" data-screen="challenges">
+          <div class="app-head">
+            <button class="icon-btn" data-back="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button>
+            <div style="text-align:center"><b style="font-family:var(--font-display);font-size:16px">Challenges</b><div style="font-size:11px;color:var(--text-3);font-weight:500">Bonus coins on top of walking</div></div>
+            <span style="width:40px"></span>
+          </div>
+
+          <div class="section-h" style="padding-top:14px">Daily</div>
+          <div class="chal-card">
+            <div class="chal-head">
+              <div class="ch-ic" style="background:var(--mint-tint);color:var(--mint-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.5 9-4 6-3-3.4"/></svg></div>
+              <div><b>Walk 8,000 steps</b><span>Resets at midnight · auto-tracked</span></div>
+              <span class="rew chip gold">+40 coins</span>
+            </div>
+            <div class="chal-foot">
+              <div class="cf-prog"><div class="bar slim"><i style="width:84%"></i></div><span style="display:block;margin-top:5px">6,750 / 8,000</span></div>
+              <span class="chip">In progress</span>
+            </div>
+          </div>
+          <div class="chal-card">
+            <div class="chal-head">
+              <div class="ch-ic" style="background:var(--info-tint);color:var(--info)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+              <div><b>15-minute evening walk</b><span>Anytime after 5 PM · verified session</span></div>
+              <span class="rew chip gold">+15 coins</span>
+            </div>
+            <div class="chal-foot">
+              <div class="cf-prog"><span>Not started yet</span></div>
+              <button class="btn btn-soft btn-sm" data-go="walkprep">Start</button>
+            </div>
+          </div>
+
+          <div class="section-h">This week</div>
+          <div class="chal-card">
+            <div class="chal-head">
+              <div class="ch-ic" style="background:var(--gold-tint);color:var(--gold-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9.8 22l8.7-11.5H12z"/></svg></div>
+              <div><b>Three 10K days</b><span>Hit 10,000 steps on 3 days</span></div>
+              <span class="rew chip gold">+75 coins</span>
+            </div>
+            <div class="chal-foot">
+              <div class="cf-prog"><div class="bar slim"><i style="width:66%"></i></div><span style="display:block;margin-top:5px">2 of 3 days done · 4 days left</span></div>
+              <span class="chip">On track</span>
+            </div>
+          </div>
+          <div class="chal-card">
+            <div class="chal-head">
+              <div class="ch-ic" style="background:var(--mint-tint);color:var(--mint-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-6 4 3 6-8"/><path d="M18 6h3v3"/></svg></div>
+              <div><b>60,000 weekly steps</b><span>Mon–Sun · all steps count</span></div>
+              <span class="rew chip gold">+50 coins</span>
+            </div>
+            <div class="chal-foot">
+              <div class="cf-prog"><div class="bar slim"><i style="width:88%"></i></div><span style="display:block;margin-top:5px">52,772 / 60,000</span></div>
+              <span class="chip mint">Almost there</span>
+            </div>
+          </div>
+
+          <div class="section-h">October consistency</div>
+          <div class="chal-card">
+            <div class="chal-head">
+              <div class="ch-ic" style="background:var(--surface-2);color:var(--text-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg></div>
+              <div><b>20 active days in October</b><span>Any day with 6,000+ steps counts</span></div>
+              <span class="rew chip gold">+120 coins</span>
+            </div>
+            <div class="cal-dots">
+              <i class="hit">1</i><i class="hit">2</i><i class="hit">3</i><i>4</i><i class="hit">5</i><i class="hit">6</i><i class="hit">7</i><i class="hit">8</i><i>9</i><i class="hit">10</i><i class="hit">11</i><i class="hit">12</i><i class="hit">13</i><i class="hit">14</i><i class="today">15</i><i>16</i><i>17</i><i>18</i><i>19</i><i>20</i><i>21</i><i>22</i><i>23</i><i>24</i><i>25</i><i>26</i><i>27</i><i>28</i><i>29</i><i>30</i><i>31</i>
+            </div>
+            <div class="chal-foot" style="margin-top:12px">
+              <div class="cf-prog"><div class="bar slim gold"><i style="width:70%"></i></div><span style="display:block;margin-top:5px">14 of 20 days · 6 days ahead of pace</span></div>
+            </div>
+          </div>
+
+          <div class="section-h">Sponsored</div>
+          <div class="chal-card" style="border-style:dashed">
+            <div class="chal-head">
+              <div class="ch-ic" style="background:var(--surface-2);color:var(--text-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l16-6v14L3 13z"/><path d="M7 13.5V18a2 2 0 0 0 4 0v-3"/></svg></div>
+              <div><b>Deepavali Walk Week <span class="chip" style="font-size:9px;padding:2px 7px;vertical-align:2px">SPONSORED</span></b><span>Community goal · clearly-labelled partner missions</span></div>
+              <span class="rew chip gold">+150</span>
+            </div>
+            <div class="chal-foot">
+              <div class="cf-prog"><span>Starts Nov 5 · 12,410 walkers joined</span></div>
+              <button class="btn btn-ghost btn-sm" data-toast="Joined! We'll remind you when it starts.">Join</button>
+            </div>
+          </div>
+          <p style="margin:4px 22px 0;font-size:10.5px;color:var(--text-3);line-height:1.6">Sponsored challenges always show a label. Partners never receive your personal data — only aggregate, anonymised totals.</p>
+        </section>
+
+        <!-- ================= WALLET ================= -->
+        <section class="screen" data-screen="wallet">
+          <div class="app-head">
+            <div>
+              <div class="ah-title">Wallet</div>
+              <div class="ah-sub">Your coins, fully transparent</div>
+            </div>
+            <button class="icon-btn" data-go="history" aria-label="History"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h9a3 3 0 0 0 0-6h-1M3 12v4a2 2 0 0 0 2 2h12a3 3 0 0 0 3-3v-1m-2-7h2m-5 3h.01"/><path d="M17 5.5h4.5"/></svg></button>
+          </div>
+
+          <div class="wallet-hero">
+            <div class="wh-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9M9.5 9.8c0-1 1.1-1.6 2.5-1.6s2.5.6 2.5 1.6c0 2.4-5 1.6-5 4 0 1 1.1 1.7 2.5 1.7s2.5-.7 2.5-1.7"/></svg>
+              Available balance
+            </div>
+            <div class="wh-bal"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" opacity=".18"/><circle cx="12" cy="12" r="6.8"/></svg>1,246</div>
+            <div class="wh-sub">Verified coins ready to spend · lifetime earned 3,094</div>
+            <div class="wh-rows">
+              <div class="wh-cell"><span>Earned today</span><b>8 <span style="font-size:10px;color:#9FBCB0;font-weight:600">/ 25 cap</span></b></div>
+              <div class="wh-cell"><span>Verifying</span><b>18</b></div>
+              <div class="wh-cell"><span>Reserved</span><b>0</b></div>
+              <div class="wh-cell"><span>Redeemed</span><b>1,848</b></div>
+            </div>
+          </div>
+
+          <p class="wallet-disc"><b>What coins are:</b> loyalty points earned from verified walking. They have <b>no cash value</b>, can't be transferred or withdrawn, and can only be used in this catalogue under the published program rules.</p>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 20px 10px">
+            <div class="card-title">Recent activity</div>
+            <span class="link" style="font-size:12px;font-weight:600;color:var(--mint-600)" data-go="history">View all</span>
+          </div>
+          <div class="card" style="margin:0 20px;padding:4px 0">
+            <div class="tx-item">
+              <div class="tx-ic" style="background:var(--mint-tint);color:var(--mint-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17c3-1 4-4 4-7 0-2 1.4-3.5 3-3.5S14 8 14 10c0 4 2 6.5 5 7"/></svg></div>
+              <div class="tx-main"><b>Walking coins</b><span>Today · 8,412 eligible steps</span></div>
+              <div class="tx-amt amt-plus">+8<span class="st st-pend">Verifying</span></div>
+            </div>
+            <div class="tx-item">
+              <div class="tx-ic" style="background:var(--mint-tint);color:var(--mint-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17c3-1 4-4 4-7 0-2 1.4-3.5 3-3.5S14 8 14 10c0 4 2 6.5 5 7"/></svg></div>
+              <div class="tx-main"><b>Walking coins</b><span>Yesterday · 11,204 eligible steps</span></div>
+              <div class="tx-amt amt-plus">+11<span class="st st-ok">Verified</span></div>
+            </div>
+            <div class="tx-item">
+              <div class="tx-ic" style="background:var(--gold-tint);color:var(--gold-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9.8 22l8.7-11.5H12z"/></svg></div>
+              <div class="tx-main"><b>Challenge bonus</b><span>Yesterday · Weekly 60K completed</span></div>
+              <div class="tx-amt amt-plus">+50<span class="st st-ok">Verified</span></div>
+            </div>
+            <div class="tx-item">
+              <div class="tx-ic" style="background:var(--surface-2);color:var(--text-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1.2 11a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></div>
+              <div class="tx-main"><b>Redemption · Steel Bottle</b><span>Oct 10 · Order #WR-20391</span></div>
+              <div class="tx-amt amt-minus">−900<span class="st st-ok">Reserved</span></div>
+            </div>
+            <div class="tx-item">
+              <div class="tx-ic" style="background:var(--danger-tint);color:var(--danger)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 6 12 12M18 6 6 18"/></svg></div>
+              <div class="tx-main"><b>Redemption refunded</b><span>Oct 9 · Order #WR-20114 rejected in review</span></div>
+              <div class="tx-amt amt-plus">+5,500<span class="st st-ok">Returned</span></div>
+            </div>
+          </div>
+          <div class="pad" style="margin-top:16px"><button class="btn btn-soft" data-go="catalogue">Browse rewards</button></div>
+        </section>
+
+        <!-- ================= HISTORY ================= -->
+        <section class="screen" data-screen="history">
+          <div class="app-head">
+            <button class="icon-btn" data-back="wallet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button>
+            <div style="text-align:center"><b style="font-family:var(--font-display);font-size:16px">Transactions</b><div style="font-size:11px;color:var(--text-3);font-weight:500">Every coin has a paper trail</div></div>
+            <span style="width:40px"></span>
+          </div>
+          <div class="chip-row scroll" style="margin-top:8px">
+            <span class="chip select on">All</span><span class="chip select">Walking</span><span class="chip select">Bonuses</span><span class="chip select">Redemptions</span><span class="chip select">Adjustments</span>
+          </div>
+          <div style="padding:10px 20px 0;font-size:11px;font-weight:700;letter-spacing:1.2px;color:var(--text-3)">TODAY</div>
+          <div class="card" style="margin:8px 20px 0;padding:4px 0">
+            <div class="tx-item"><div class="tx-ic" style="background:var(--mint-tint);color:var(--mint-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17c3-1 4-4 4-7 0-2 1.4-3.5 3-3.5S14 8 14 10c0 4 2 6.5 5 7"/></svg></div><div class="tx-main"><b>Walking coins</b><span>6,842 verified session steps + background steps</span></div><div class="tx-amt amt-plus">+8<span class="st st-pend">Verifying</span></div></div>
+          </div>
+          <div style="padding:16px 20px 0;font-size:11px;font-weight:700;letter-spacing:1.2px;color:var(--text-3)">YESTERDAY</div>
+          <div class="card" style="margin:8px 20px 0;padding:4px 0">
+            <div class="tx-item"><div class="tx-ic" style="background:var(--mint-tint);color:var(--mint-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17c3-1 4-4 4-7 0-2 1.4-3.5 3-3.5S14 8 14 10c0 4 2 6.5 5 7"/></svg></div><div class="tx-main"><b>Walking coins</b><span>11,204 eligible steps</span></div><div class="tx-amt amt-plus">+11<span class="st st-ok">Verified</span></div></div>
+            <div class="tx-item"><div class="tx-ic" style="background:var(--gold-tint);color:var(--gold-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9.8 22l8.7-11.5H12z"/></svg></div><div class="tx-main"><b>Challenge bonus</b><span>Weekly 60K steps</span></div><div class="tx-amt amt-plus">+50<span class="st st-ok">Verified</span></div></div>
+            <div class="tx-item"><div class="tx-ic" style="background:var(--gold-tint);color:var(--gold-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9.8 22l8.7-11.5H12z"/></svg></div><div class="tx-main"><b>Daily challenge claim</b><span>Walk 8,000 steps</span></div><div class="tx-amt amt-plus">+40<span class="st st-ok">Verified</span></div></div>
+          </div>
+          <div style="padding:16px 20px 0;font-size:11px;font-weight:700;letter-spacing:1.2px;color:var(--text-3)">EARLIER THIS MONTH</div>
+          <div class="card" style="margin:8px 20px 0;padding:4px 0">
+            <div class="tx-item"><div class="tx-ic" style="background:var(--mint-tint);color:var(--mint-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17c3-1 4-4 4-7 0-2 1.4-3.5 3-3.5S14 8 14 10c0 4 2 6.5 5 7"/></svg></div><div class="tx-main"><b>Walking coins</b><span>Oct 12 · cap reached at 25,610 steps</span></div><div class="tx-amt amt-plus">+25<span class="st st-ok">Verified</span></div></div>
+            <div class="tx-item"><div class="tx-ic" style="background:var(--surface-2);color:var(--text-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1.2 11a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></div><div class="tx-main"><b>Redemption reserved</b><span>Oct 10 · Steel Bottle · #WR-20391</span></div><div class="tx-amt amt-minus">−900<span class="st st-ok">Approved</span></div></div>
+            <div class="tx-item"><div class="tx-ic" style="background:var(--danger-tint);color:var(--danger)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></div><div class="tx-main"><b>Refund · rejected order</b><span>Oct 9 · #WR-20114 · review found duplicate-device signal</span></div><div class="tx-amt amt-plus">+5,500<span class="st st-ok">Returned</span></div></div>
+            <div class="tx-item"><div class="tx-ic" style="background:var(--surface-2);color:var(--text-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1.2 11a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></div><div class="tx-main"><b>Redemption delivered</b><span>Oct 1 · Yoga Mat · #WR-19877</span></div><div class="tx-amt amt-minus">−1,800<span class="st st-ok">Completed</span></div></div>
+          </div>
+          <p style="margin:16px 22px;font-size:10.5px;color:var(--text-3);line-height:1.65">Walking coins are minted from server-verified eligible steps only. Bonus coins from challenges are separate and don't count toward the daily walking cap.</p>
+        </section>
+
+        <!-- ================= CATALOGUE ================= -->
+        <section class="screen" data-screen="catalogue">
+          <div class="app-head">
+            <div>
+              <div class="ah-title">Rewards</div>
+              <div class="ah-sub">Real products for real steps</div>
+            </div>
+            <button class="chip mint" data-go="wallet" style="border:none;cursor:pointer;padding:8px 13px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9"/></svg>
+              1,246
+            </button>
+          </div>
+          <div class="chip-row scroll" style="margin-top:6px" id="catChips">
+            <span class="chip select on">All</span><span class="chip select">Starter</span><span class="chip select">Everyday</span><span class="chip select">Fitness</span><span class="chip select">Electronics</span><span class="chip select">Premium</span>
+          </div>
+
+          <div class="card" style="margin:14px 20px 0;display:flex;gap:14px;align-items:center;overflow:hidden;position:relative">
+            <div style="position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:var(--mint-tint);opacity:.7"></div>
+            <div class="pc-icon" style="width:56px;height:56px;border-radius:18px;background:var(--mint-tint);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#007A56" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="26" height="26"><path d="M4 13a8 8 0 0 1 16 0"/><rect x="3" y="13" width="4" height="7" rx="2"/><rect x="17" y="13" width="4" height="7" rx="2"/></svg>
+            </div>
+            <div style="flex:1;position:relative">
+              <span class="chip gold" style="font-size:9.5px;padding:3px 8px">FEATURED</span>
+              <b style="display:block;font-family:var(--font-display);font-size:15px;font-weight:700;margin-top:5px;letter-spacing:-.2px">TWS Earbuds IPX5</b>
+              <div style="font-size:11.5px;color:var(--text-2);margin-top:2px">5,500 coins · 23% there at your pace</div>
+              <div class="bar slim" style="margin-top:8px"><i style="width:23%"></i></div>
+            </div>
+          </div>
+
+          <div class="section-h">All rewards <small>Demo catalogue · prices are illustrative placeholders</small></div>
+          <div class="cat-grid">
+            <div class="prod-card" data-go="product" data-pid="bottle">
+              <div class="pc-img" style="background:var(--mint-tint)"><svg viewBox="0 0 24 24" fill="none" stroke="#007A56" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v3.2c1.8 1 3 2.9 3 5.05V19a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-7.75c0-2.15 1.2-4.05 3-5.05z"/><path d="M6.4 13h11.2"/></svg></div>
+              <div class="pc-body"><b>Steel Water Bottle 1L</b>
+                <div class="pc-price"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg>900</div>
+                <div class="pc-prog"><div class="bar slim gold"><i style="width:100%"></i></div><span>Ready to redeem</span></div>
+              </div>
+            </div>
+            <div class="prod-card" data-go="product" data-pid="band">
+              <div class="pc-img" style="background:var(--info-tint)"><svg viewBox="0 0 24 24" fill="none" stroke="#3D7DC8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4c4 5 4 11 0 16M19 4c-4 5-4 11 0 16M7.5 12h9"/></svg></div>
+              <div class="pc-body"><b>Resistance Band Set</b>
+                <div class="pc-price"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg>650</div>
+                <div class="pc-prog"><div class="bar slim"><i style="width:100%"></i></div><span>Ready to redeem</span></div>
+              </div>
+            </div>
+            <div class="prod-card" data-go="product" data-pid="rope">
+              <div class="pc-img" style="background:var(--gold-tint)"><svg viewBox="0 0 24 24" fill="none" stroke="#8A6116" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8c6-4 8 8 14 4"/><rect x="3" y="6" width="3.5" height="4" rx="1.4"/><rect x="17.5" y="10" width="3.5" height="4" rx="1.4"/></svg></div>
+              <div class="pc-body"><b>Speed Jump Rope</b>
+                <div class="pc-price"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg>500</div>
+                <div class="pc-prog"><div class="bar slim"><i style="width:100%"></i></div><span>Ready to redeem</span></div>
+              </div>
+            </div>
+            <div class="prod-card" data-go="product" data-pid="mat">
+              <div class="pc-img" style="background:var(--mint-tint)"><svg viewBox="0 0 24 24" fill="none" stroke="#007A56" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h13a3.5 3.5 0 0 1 0 7H4z"/><path d="M4 8.5v7M20 8v8.5"/></svg></div>
+              <div class="pc-body"><b>Yoga Mat TPE 6mm</b>
+                <div class="pc-price"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg>1,800</div>
+                <div class="pc-prog"><div class="bar slim"><i style="width:69%"></i></div><span>1,246 / 1,800</span></div>
+              </div>
+            </div>
+            <div class="prod-card" data-go="product" data-pid="powerbank">
+              <div class="pc-img" style="background:var(--info-tint)"><svg viewBox="0 0 24 24" fill="none" stroke="#3D7DC8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="4" width="10" height="17" rx="2.5"/><path d="M10 2.5h4M11.5 9l-1.5 3h3l-1.5 3"/></svg></div>
+              <div class="pc-body"><b>Power Bank 10,000mAh</b>
+                <div class="pc-price"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg>2,200</div>
+                <div class="pc-prog"><div class="bar slim"><i style="width:57%"></i></div><span>1,246 / 2,200</span></div>
+              </div>
+            </div>
+            <div class="prod-card" data-go="product" data-pid="earbuds">
+              <div class="pc-img" style="background:var(--surface-2)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13a8 8 0 0 1 16 0"/><rect x="3" y="13" width="4" height="7" rx="2"/><rect x="17" y="13" width="4" height="7" rx="2"/></svg></div>
+              <div class="pc-body"><b>TWS Earbuds IPX5</b>
+                <div class="pc-price"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg>5,500</div>
+                <div class="pc-prog"><div class="bar slim"><i style="width:23%"></i></div><span>1,246 / 5,500</span></div>
+              </div>
+            </div>
+            <div class="prod-card" data-go="product" data-pid="tracker">
+              <div class="pc-img" style="background:var(--gold-tint)"><svg viewBox="0 0 24 24" fill="none" stroke="#8A6116" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="6.5" width="10" height="11" rx="3.2"/><path d="M9.5 3.5h5l.6 3M9.5 20.5h5l.6-3"/></svg></div>
+              <div class="pc-body"><b>Fitness Tracker Band</b>
+                <div class="pc-price"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg>7,500</div>
+                <div class="pc-prog"><div class="bar slim"><i style="width:17%"></i></div><span>1,246 / 7,500</span></div>
+              </div>
+            </div>
+            <div class="prod-card" data-go="product" data-pid="watch">
+              <div class="pc-img" style="background:var(--gold-tint);position:relative">
+                <span class="chip gold stock" style="font-size:8.5px;padding:3px 7px">LIMITED · 42 LEFT</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#8A6116" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="6.5" width="10" height="11" rx="3.2"/><path d="M9.5 3.5h5l.6 3M9.5 20.5h5l.6-3M12 10.5v2.5l1.8 1"/></svg>
+              </div>
+              <div class="pc-body"><b>Smartwatch AMOLED</b>
+                <div class="pc-price"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg>14,000</div>
+                <div class="pc-prog"><div class="bar slim"><i style="width:9%"></i></div><span>Long-horizon goal</span></div>
+              </div>
+            </div>
+            <div class="prod-card" data-go="product" data-pid="phone" style="opacity:.85">
+              <div class="pc-img" style="background:var(--surface-2);position:relative">
+                <span class="chip stock" style="font-size:8.5px;padding:3px 7px;background:var(--surface);color:var(--text-2)">LIMITED · 5 LEFT</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="3" width="10" height="18" rx="2.6"/><path d="M11 17.8h2"/></svg>
+              </div>
+              <div class="pc-body"><b>Smartphone (mid-range)</b>
+                <div class="pc-price"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg>75,000</div>
+                <div class="pc-prog"><div class="bar slim"><i style="width:2%"></i></div><span>Aspiration tier · stock-limited</span></div>
+              </div>
+            </div>
+          </div>
+          <p style="margin:18px 22px 0;font-size:10.5px;color:var(--text-3);line-height:1.65">Stock counts update in real time and every redemption re-verifies inventory. If an item sells out between steps, coins are never taken.</p>
+        </section>
+
+        <!-- ================= PRODUCT DETAIL ================= -->
+        <section class="screen" data-screen="product" id="productScreen" style="padding-bottom:130px">
+          <div class="pd-hero" id="pdHero" style="background:var(--info-tint)">
+            <button class="icon-btn pd-back" data-go="catalogue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button>
+            <svg id="pdIcon" viewBox="0 0 24 24" fill="none" stroke="#3D7DC8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13a8 8 0 0 1 16 0"/><rect x="3" y="13" width="4" height="7" rx="2"/><rect x="17" y="13" width="4" height="7" rx="2"/></svg>
+            <button class="icon-btn pd-share" data-toast="Link copied — share your goal with friends."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="6" r="2.6"/><circle cx="18" cy="18" r="2.6"/><path d="m8.3 10.8 7.4-3.6M8.3 13.2l7.4 3.6"/></svg></button>
+          </div>
+          <div class="pd-price-bar">
+            <div class="pd-price"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9" opacity=".2"/><circle cx="12" cy="12" r="6.4"/></svg><span id="pdPrice">5,500</span></div>
+            <div class="pd-eta" id="pdEta">At your recent pace:<br>about 22 weeks · estimate only</div>
+          </div>
+          <div class="pad" style="margin-top:2px">
+            <h2 id="pdName" style="font-family:var(--font-display);font-size:21px;font-weight:800;letter-spacing:-.5px">TWS Earbuds IPX5</h2>
+            <div class="chip-row" style="margin-top:9px">
+              <span class="chip" id="pdCat">Electronics</span>
+              <span class="chip mint" id="pdStock">In stock · 128 units</span>
+              <span class="chip info" id="pdLevel">Level 2+</span>
+            </div>
+            <p style="font-size:13px;color:var(--text-2);line-height:1.65;margin-top:13px" id="pdDesc">True wireless earbuds with IPX5 sweat resistance — built for workouts and monsoon commutes. 28-hour total battery with the case, touch controls, and a low-latency game mode.</p>
+
+            <div class="card tight" style="margin-top:16px">
+              <div class="card-title">Your progress <span style="font-size:11px;color:var(--text-3);font-weight:600" id="pdHave">1,246 / 5,500</span></div>
+              <div class="bar" style="margin-top:11px"><i id="pdBar" style="width:23%"></i></div>
+              <p style="font-size:11px;color:var(--text-3);margin-top:9px;line-height:1.6" id="pdNeed">You need 4,254 more coins. Estimates assume your recent pace continues — they're guidance, never a guarantee or a countdown.</p>
+            </div>
+
+            <div class="card tight" style="margin-top:13px">
+              <div class="card-title">Eligibility</div>
+              <div style="margin-top:6px">
+                <div class="elig-check ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><span>Account in good standing for 30+ days</span></div>
+                <div class="elig-check ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><span>Level 2 or above</span></div>
+                <div class="elig-check ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><span>Phone number verified</span></div>
+                <div class="elig-check ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><span>No open anti-fraud review on your account</span></div>
+              </div>
+            </div>
+
+            <div style="margin-top:6px">
+              <div class="acc-head open" data-acc="specs"><b>Specifications</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
+              <div class="acc-body open" id="acc-specs">Driver: 13 mm dynamic · Bluetooth 5.3 · IPX5 · 28 h with case · USB-C · Touch controls · Weight 4.1 g per bud. Product photos in the real catalogue are actual SKUs from the fulfilment partner.</div>
+              <div class="acc-head" data-acc="terms"><b>Fulfilment &amp; terms</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
+              <div class="acc-body" id="acc-terms">Ships in 7–14 days after approval, India only. Coins are reserved when you confirm and deducted on approval; if the order is rejected or cancelled, coins return automatically. One unit per 60 days per category. Coins are loyalty points with no cash value and are not transferable.</div>
+            </div>
+          </div>
+
+          <div class="pd-cta">
+            <button class="btn btn-primary" id="pdRedeemBtn">Redeem now · 5,500 coins</button>
+            <div class="need" id="pdNeedLine">You need 4,254 more coins</div>
+          </div>
+        </section>
+
+        <!-- ================= SUCCESS ================= -->
+        <section class="screen" data-screen="success">
+          <div class="success-hero">
+            <div class="s-ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg></div>
+            <h2>Redemption confirmed</h2>
+            <p>900 coins reserved for your <b>Steel Water Bottle</b>.<br>We verify stock and review the order next — you'll get a notification at every step.</p>
+            <span class="order-id"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 11h16"/></svg>ORDER #WR-20416</span>
+          </div>
+          <div class="card" style="margin:22px 20px 0">
+            <div class="card-title">What happens next</div>
+            <div class="tl" style="margin-top:12px">
+              <div class="tl-item done"><div class="tl-dot"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg></div><div><b>Coins reserved</b><span>900 coins held · wallet balance updated instantly</span></div></div>
+              <div class="tl-item"><div class="tl-dot"></div><div><b>Eligibility &amp; stock check</b><span>Automatic — usually within minutes</span></div></div>
+              <div class="tl-item"><div class="tl-dot"></div><div><b>Approval &amp; packing</b><span>Add your shipping address to keep this moving</span></div></div>
+              <div class="tl-item"><div class="tl-dot"></div><div><b>Shipped &amp; delivered</b><span>Tracking shared here and by notification</span></div></div>
+            </div>
+          </div>
+          <div class="pad" style="margin-top:18px">
+            <button class="btn btn-primary" data-go="orders">Track this order</button>
+            <button class="btn btn-ghost" style="margin-top:10px" data-go="home">Back to Home</button>
+          </div>
+        </section>
+
+        <!-- ================= ORDERS ================= -->
+        <section class="screen" data-screen="orders">
+          <div class="app-head">
+            <button class="icon-btn" data-back="profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button>
+            <div style="text-align:center"><b style="font-family:var(--font-display);font-size:16px">My orders</b><div style="font-size:11px;color:var(--text-3);font-weight:500">3 all-time</div></div>
+            <span style="width:40px"></span>
+          </div>
+          <div class="section-h" style="padding-top:12px">In progress</div>
+          <div class="order-card">
+            <div class="oc-head">
+              <div class="oc-img" style="background:var(--mint-tint)"><svg viewBox="0 0 24 24" fill="none" stroke="#007A56" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v3.2c1.8 1 3 2.9 3 5.05V19a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-7.75c0-2.15 1.2-4.05 3-5.05z"/><path d="M6.4 13h11.2"/></svg></div>
+              <div style="flex:1"><b>Steel Water Bottle 1L</b><div class="oc-id">#WR-20416 · Oct 15</div></div>
+              <span class="chip mint">In review</span>
+            </div>
+            <div class="tl" style="padding:4px 2px 0">
+              <div class="tl-item done"><div class="tl-dot"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="m5 13 4 4L19 7"/></svg></div><div><b>Coins reserved · 900</b><span>Oct 15, 9:41 AM</span></div></div>
+              <div class="tl-item"><div class="tl-dot"></div><div><b>Eligibility &amp; stock check</b><span>In progress</span></div></div>
+            </div>
+          </div>
+
+          <div class="section-h">Completed</div>
+          <div class="order-card">
+            <div class="oc-head">
+              <div class="oc-img" style="background:var(--mint-tint)"><svg viewBox="0 0 24 24" fill="none" stroke="#007A56" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h13a3.5 3.5 0 0 1 0 7H4z"/><path d="M4 8.5v7M20 8v8.5"/></svg></div>
+              <div style="flex:1"><b>Yoga Mat TPE 6mm</b><div class="oc-id">#WR-19877 · Oct 1</div></div>
+              <span class="chip">Delivered</span>
+            </div>
+            <div class="oc-foot"><span class="oc-coins"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg>1,800 coins</span><span class="chip mint" style="font-size:10px" data-toast="Thanks! A rating form would open here.">Rate delivery</span></div>
+          </div>
+          <div class="order-card" style="border-color:rgba(222,74,79,.3)">
+            <div class="oc-head">
+              <div class="oc-img" style="background:var(--danger-tint)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m6 6 12 12" opacity="0"/><path d="M12 8v4M12 16h.01"/></svg></div>
+              <div style="flex:1"><b>TWS Earbuds IPX5</b><div class="oc-id">#WR-20114 · Sep 21</div></div>
+              <span class="chip danger">Rejected</span>
+            </div>
+            <p style="font-size:11.5px;color:var(--text-2);line-height:1.6;margin-top:2px">Review found a duplicate-device signal on the account. <b style="color:var(--text)">5,500 coins were returned automatically</b> — you can appeal in Help within 14 days.</p>
+            <div class="oc-foot" style="margin-top:8px"><span class="oc-coins"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg>5,500 returned</span><span class="chip" style="font-size:10px" data-toast="An appeal form would open here.">Appeal</span></div>
+          </div>
+        </section>
+
+        <!-- ================= PROFILE ================= -->
+        <section class="screen" data-screen="profile">
+          <div class="prof-hero">
+            <div class="p-av">A</div>
+            <h2>Arjun Mehta</h2>
+            <div class="p-lvl"><span class="lvl-pill"><span class="dot-l"></span>Level 3 · Strider</span></div>
+            <div style="font-size:11.5px;color:var(--text-3);margin-top:8px;font-weight:500">Walking since March 2026 · Bengaluru</div>
+          </div>
+          <div class="prof-stats">
+            <div class="pstat"><b>3.21M</b><span>LIFETIME STEPS</span></div>
+            <div class="pstat"><b>3,094</b><span>COINS EARNED</span></div>
+            <div class="pstat"><b>12</b><span>BADGES</span></div>
+          </div>
+          <div class="set-group" style="margin-top:18px">
+            <div class="set-row" data-go="orders"><div class="sr-ic" style="background:var(--mint-tint);color:var(--mint-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1.2 11a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></div><div class="sr-main"><b>My orders</b><span>Track redemptions and deliveries</span></div><div class="sr-end">1 active</div></div>
+            <div class="set-row" data-go="wallet"><div class="sr-ic" style="background:var(--gold-tint);color:var(--gold-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9M9.5 9.8c0-1 1.1-1.6 2.5-1.6s2.5.6 2.5 1.6c0 2.4-5 1.6-5 4 0 1 1.1 1.7 2.5 1.7s2.5-.7 2.5-1.7"/></svg></div><div class="sr-main"><b>Wallet</b><span>Balance and full transaction history</span></div><div class="sr-end">1,246</div></div>
+            <div class="set-row" data-go="badges"><div class="sr-ic" style="background:var(--info-tint);color:var(--info)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5.5"/><path d="m8.8 13.5-1.3 7 4.5-2.6 4.5 2.6-1.3-7"/></svg></div><div class="sr-main"><b>Achievements</b><span>Badges and collections</span></div><div class="sr-end">12</div></div>
+          </div>
+          <div class="set-group">
+            <div class="set-row" data-go="settings"><div class="sr-ic" style="background:var(--surface-2);color:var(--text-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19 12a7 7 0 0 0-.15-1.4l2-1.55-2-3.46-2.35.95A7 7 0 0 0 14.3 5.1L14 2.6h-4l-.3 2.5a7 7 0 0 0-2.2 1.44l-2.35-.95-2 3.46 2 1.55A7 7 0 0 0 5 12c0 .48.05.94.15 1.4l-2 1.55 2 3.46 2.35-.95a7 7 0 0 0 2.2 1.44l.3 2.5h4l.3-2.5a7 7 0 0 0 2.2-1.44l2.35.95 2-3.46-2-1.55c.1-.46.15-.92.15-1.4z"/></svg></div><div class="sr-main"><b>Settings &amp; privacy</b><span>Theme, permissions, language, data</span></div></div>
+            <div class="set-row" data-go="help"><div class="sr-ic" style="background:var(--surface-2);color:var(--text-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 .3c0 1.7-2.5 2-2.5 3.7M12 17h.01"/></svg></div><div class="sr-main"><b>Help &amp; support</b><span>FAQ, contact, how verification works</span></div></div>
+            <div class="set-row" data-toast="Program rules would open here."><div class="sr-ic" style="background:var(--surface-2);color:var(--text-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="m9 12 2 2 4-4.5"/></svg></div><div class="sr-main"><b>Program rules</b><span>Plain-language rewards terms</span></div></div>
+          </div>
+          <p style="text-align:center;font-size:10.5px;color:var(--text-3);padding:6px 0 10px">Steprivo 2.0 · Prototype build 0.1 · Coins are loyalty points, not currency</p>
+        </section>
+
+        <!-- ================= SETTINGS ================= -->
+        <section class="screen" data-screen="settings">
+          <div class="app-head">
+            <button class="icon-btn" data-back="profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button>
+            <div style="text-align:center"><b style="font-family:var(--font-display);font-size:16px">Settings</b></div>
+            <span style="width:40px"></span>
+          </div>
+          <div class="section-h" style="padding-top:12px">Appearance</div>
+          <div class="set-group">
+            <div class="set-row" id="themeRow"><div class="sr-ic" style="background:var(--surface-2);color:var(--text-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z"/></svg></div><div class="sr-main"><b>Dark mode</b><span>Follows system by default</span></div><div class="sr-end"><div class="toggle on" id="themeToggle"></div></div></div>
+          </div>
+          <div class="section-h">Walking</div>
+          <div class="set-group">
+            <div class="set-row" data-toast="Goal editor would open here."><div class="sr-ic" style="background:var(--mint-tint);color:var(--mint-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg></div><div class="sr-main"><b>Daily goal</b><span>Raise or lower anytime</span></div><div class="sr-end">10,000</div></div>
+            <div class="set-row"><div class="sr-ic" style="background:var(--mint-tint);color:var(--mint-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17c3-1 4-4 4-7 0-2 1.4-3.5 3-3.5S14 8 14 10c0 4 2 6.5 5 7"/></svg></div><div class="sr-main"><b>Background step counting</b><span>Battery-friendly hardware counter</span></div><div class="sr-end"><div class="toggle on"></div></div></div>
+            <div class="set-row"><div class="sr-ic" style="background:var(--surface-2);color:var(--text-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21s-7-5.3-7-11a7 7 0 0 1 14 0c0 5.7-7 11-7 11z"/></svg></div><div class="sr-main"><b>Location during walks</b><span>Only while a verified session is live</span></div><div class="sr-end">While walking</div></div>
+            <div class="set-row"><div class="sr-ic" style="background:var(--surface-2);color:var(--text-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M5 7l2.5 2.5M19 7l-2.5 2.5M12 21a6 6 0 0 0 6-6H6a6 6 0 0 0 6 6z"/></svg></div><div class="sr-main"><b>Health Connect</b><span>Connected · syncing daily totals</span></div><div class="sr-end"><span class="chip mint" style="font-size:10px">Linked</span></div></div>
+          </div>
+          <div class="section-h">Notifications</div>
+          <div class="set-group">
+            <div class="set-row"><div class="sr-ic" style="background:var(--surface-2);color:var(--text-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div><div class="sr-main"><b>Streak reminders</b><span>Max one per day, evening only</span></div><div class="sr-end"><div class="toggle on"></div></div></div>
+            <div class="set-row"><div class="sr-ic" style="background:var(--surface-2);color:var(--text-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/></svg></div><div class="sr-main"><b>Milestone celebrations</b><span>Goal rings, badges, level-ups</span></div><div class="sr-end"><div class="toggle on"></div></div></div>
+            <div class="set-row"><div class="sr-ic" style="background:var(--surface-2);color:var(--text-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1.2 11a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></div><div class="sr-main"><b>Order updates</b><span>Approvals, shipping, delivery</span></div><div class="sr-end"><div class="toggle on"></div></div></div>
+          </div>
+          <div class="section-h">Language</div>
+          <div class="set-group">
+            <div class="set-row"><div class="sr-main"><b>English</b></div><div class="sr-end"><div class="radio-dot on"></div></div></div>
+            <div class="set-row"><div class="sr-main"><b>हिन्दी</b><span>Hindi — full translation in V1</span></div><div class="sr-end"><div class="radio-dot"></div></div></div>
+            <div class="set-row"><div class="sr-main"><b>ಕನ್ನಡ</b><span>Kannada — planned after V1</span></div><div class="sr-end"><div class="radio-dot"></div></div></div>
+          </div>
+          <div class="section-h">Your data</div>
+          <div class="set-group">
+            <div class="set-row" data-toast="Data export would start here (JSON + CSV)."><div class="sr-ic" style="background:var(--info-tint);color:var(--info)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></div><div class="sr-main"><b>Export my data</b><span>Steps, coins, orders — full history</span></div></div>
+            <div class="set-row" data-toast="Account deletion flow with 14-day grace would open here."><div class="sr-ic" style="background:var(--danger-tint);color:var(--danger)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 7M6.5 7l1 13h9l1-13"/></svg></div><div class="sr-main"><b>Delete account</b><span>14-day grace, coins void on deletion</span></div></div>
+          </div>
+          <p style="text-align:center;font-size:10.5px;color:var(--text-3);padding:4px 0 12px">Privacy Policy · Terms · Program Rules — plain language, always</p>
+        </section>
+
+        <!-- ================= NOTIFICATIONS ================= -->
+        <section class="screen" data-screen="notifications">
+          <div class="app-head">
+            <button class="icon-btn" data-back="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button>
+            <div style="text-align:center"><b style="font-family:var(--font-display);font-size:16px">Notifications</b></div>
+            <button class="icon-btn" data-toast="All notifications marked as read."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5 9 17.5 20 6.5"/></svg></button>
+          </div>
+          <div class="notif-item unread"><div class="n-ic" style="background:var(--gold-tint);color:var(--gold-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9"/></svg></div><div><b>18 coins finished verifying</b><p>Yesterday's walking coins passed all checks and are now in your balance.</p><div class="n-time">8:02 AM</div></div></div>
+          <div class="notif-item unread"><div class="n-ic" style="background:var(--mint-tint);color:var(--mint-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9.8 22l8.7-11.5H12z"/></svg></div><div><b>1,588 steps from closing today's ring</b><p>An evening walk of about 20 minutes should do it. Your 14-day streak is safe either way.</p><div class="n-time">6:30 PM</div></div></div>
+          <div class="notif-item"><div class="n-ic" style="background:var(--info-tint);color:var(--info)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1.2 11a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></div><div><b>Order #WR-20416 confirmed</b><p>Your Steel Water Bottle redemption passed the stock check. Next: packing.</p><div class="n-time">Yesterday</div></div></div>
+          <div class="notif-item"><div class="n-ic" style="background:var(--surface-2);color:var(--text-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/></svg></div><div><b>New challenge: Three 10K days</b><p>This week's mission is live — +75 bonus coins on completion.</p><div class="n-time">Mon</div></div></div>
+          <div class="notif-item"><div class="n-ic" style="background:var(--surface-2);color:var(--text-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.5 9-4 6-3-3.4"/></svg></div><div><b>Level 2 badge earned: 10K Club</b><p>You've joined the club — shown on your profile with your collection.</p><div class="n-time">Oct 2</div></div></div>
+        </section>
+
+        <!-- ================= HELP ================= -->
+        <section class="screen" data-screen="help">
+          <div class="app-head">
+            <button class="icon-btn" data-back="profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button>
+            <div style="text-align:center"><b style="font-family:var(--font-display);font-size:16px">Help &amp; FAQ</b></div>
+            <span style="width:40px"></span>
+          </div>
+          <div class="card" style="margin:10px 20px 0">
+            <div class="acc-head open" data-acc="f1"><b>How are coins calculated?</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
+            <div class="acc-body open" id="acc-f1">Every 1,000 verified walking steps = 1 coin (working default — final rate pending). Only server-verified steps earn coins, with a daily cap (25 walking coins in this demo) so the program stays fair and sustainable. Challenge bonuses are separate.</div>
+            <div class="acc-head" data-acc="f2"><b>What does "verifying" mean?</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
+            <div class="acc-body" id="acc-f2">New steps are checked against plausibility rules (speed, sensor consistency, duplicate sources) before they become spendable coins. This usually takes under an hour and protects the value of every coin in the catalogue.</div>
+            <div class="acc-head" data-acc="f3"><b>Are coins money?</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
+            <div class="acc-body" id="acc-f3">No. Coins are loyalty points in this program. They have no cash value, can't be sold or transferred, and can only buy reward items from the in-app catalogue under the published rules.</div>
+            <div class="acc-head" data-acc="f4"><b>Why was my redemption rejected?</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
+            <div class="acc-body" id="acc-f4">High-value redemptions get a human review. Common reasons are duplicate-device signals or account anomalies. If a redemption is rejected, your coins are always returned automatically, and you can appeal within 14 days.</div>
+          </div>
+          <div class="pad" style="margin-top:14px">
+            <button class="btn btn-ghost" data-toast="Support chat would open here.">Contact support</button>
+          </div>
+        </section>
+
+        <!-- ================= STATES GALLERY ================= -->
+        <section class="screen" data-screen="states">
+          <div class="app-head">
+            <button class="icon-btn" data-back="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button>
+            <div style="text-align:center"><b style="font-family:var(--font-display);font-size:16px">State gallery</b><div style="font-size:11px;color:var(--text-3);font-weight:500">Polish lives in the invisible screens</div></div>
+            <span style="width:40px"></span>
+          </div>
+
+          <div class="state-label">Permission denied</div>
+          <div class="card" style="margin:0 20px">
+            <div class="empty-state" style="padding:18px 8px 12px">
+              <div class="es-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17c3-1 4-4 4-7 0-2 1.4-3.5 3-3.5S14 8 14 10c0 4 2 6.5 5 7"/><path d="m4 4 16 16"/></svg></div>
+              <b>Step counting is off</b>
+              <p style="max-width:250px;margin-left:auto;margin-right:auto">Without the activity permission we can't count your steps. Nothing is lost — your streak is frozen until you're ready.</p>
+              <button class="btn btn-primary btn-sm" style="margin:12px auto 0" data-toast="Would deep-link to Android activity permission.">Open settings</button>
+              <p style="font-size:10.5px;color:var(--text-3);margin-top:10px">Or keep exploring — everything except earning works.</p>
+            </div>
+          </div>
+
+          <div class="state-label">No step data / new device</div>
+          <div class="card" style="margin:0 20px">
+            <div class="empty-state" style="padding:18px 8px 12px">
+              <div class="es-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 20v-6M11 20V8M17 20v-10M21 20H3" opacity=".9"/></svg></div>
+              <b>Waiting for your first steps</b>
+              <p style="max-width:250px;margin-left:auto;margin-right:auto">Data usually appears within a few minutes of walking. Keep the phone with you.</p>
+            </div>
+          </div>
+
+          <div class="state-label">Offline &amp; syncing</div>
+          <div class="offline-banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12a10 10 0 0 1 14 0M8.2 15.2a6 6 0 0 1 7.6 0M11 18.4a2 2 0 0 1 2 0M2 8.8a14 14 0 0 1 20 0" opacity="0"/><path d="m6 6 12 12M8.5 9A9.8 9.8 0 0 1 19 9.8M5 13.5a14 14 0 0 1 5-3M11.8 17.2a3.4 3.4 0 0 1 3.4.6"/></svg>You're offline — steps keep counting and sync when data returns.</div>
+          <div class="card" style="margin:10px 20px 0">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><b style="font-size:13px">Syncing today's steps…</b><span class="chip info">43% <span class="puls" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--info);margin-left:3px"></span></span></div>
+            <div class="bar slim"><i style="width:43%"></i></div>
+            <div class="skel" style="height:13px;width:78%;margin-top:14px"></div>
+            <div class="skel" style="height:13px;width:55%;margin-top:8px"></div>
+          </div>
+
+          <div class="state-label">Pending verification — coins</div>
+          <div class="card tight" style="margin:0 20px;display:flex;gap:12px;align-items:center">
+            <div class="pc-icon" style="width:40px;height:40px;border-radius:12px;background:var(--gold-tint);color:var(--gold-ink);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+            <div style="flex:1"><b style="font-size:13px">18 coins verifying</b><p style="font-size:11px;color:var(--text-2);margin-top:1px">From yesterday's 11,204 steps. Usually under an hour; you don't need to do anything.</p></div>
+            <span class="chip gold">Pending</span>
+          </div>
+
+          <div class="state-label">Insufficient coins</div>
+          <div class="card" style="margin:0 20px">
+            <div style="display:flex;gap:12px;align-items:center">
+              <div class="pc-icon" style="width:46px;height:46px;border-radius:14px;background:var(--info-tint);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" fill="none" stroke="#3D7DC8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M4 13a8 8 0 0 1 16 0"/><rect x="3" y="13" width="4" height="7" rx="2"/><rect x="17" y="13" width="4" height="7" rx="2"/></svg></div>
+              <div style="flex:1"><b style="font-size:13.5px">TWS Earbuds · 5,500 coins</b><p style="font-size:11px;color:var(--text-2);margin-top:2px">About 22 weeks at your recent pace</p></div>
+            </div>
+            <div class="bar slim" style="margin-top:12px"><i style="width:23%"></i></div>
+            <button class="btn" disabled style="margin-top:13px">Need 4,254 more coins</button>
+          </div>
+
+          <div class="state-label">Out of stock</div>
+          <div class="card" style="margin:0 20px;opacity:.9">
+            <div style="display:flex;gap:12px;align-items:center">
+              <div class="pc-icon" style="width:46px;height:46px;border-radius:14px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;flex-shrink:0;filter:grayscale(1)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><rect x="7" y="6.5" width="10" height="11" rx="3.2"/><path d="M9.5 3.5h5l.6 3M9.5 20.5h5l.6-3"/></svg></div>
+              <div style="flex:1"><b style="font-size:13.5px">Smartwatch AMOLED</b><p style="font-size:11px;color:var(--text-2);margin-top:2px">Sold out — restock in progress</p></div>
+              <span class="chip danger">Out of stock</span>
+            </div>
+            <button class="btn btn-ghost btn-sm" style="margin-top:12px" data-toast="We'll notify you the moment it's back.">Notify me on restock</button>
+          </div>
+
+          <div class="state-label">GPS weak during session</div>
+          <div class="gps-warn" style="margin-top:0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+            Weak GPS signal — steps still count, route may be less accurate.
+          </div>
+
+          <div class="state-label">Streak interrupted (grace)</div>
+          <div class="card" style="margin:0 20px">
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <div class="pc-icon" style="width:40px;height:40px;border-radius:12px;background:var(--mint-tint);color:var(--mint-ink);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M12 2c1 4-3 5-3 9a3 3 0 0 0 6 .3C15 8 18 7.5 18 12a6 6 0 1 1-12 0c0-4.5 4-6 6-10z"/></svg></div>
+              <div><b style="font-size:13.5px">One grace day applied automatically</b><p style="font-size:11.5px;color:var(--text-2);margin-top:3px;line-height:1.6">Yesterday was quiet — we used 1 of your 2 monthly grace days so your 14-day streak survives. Nothing to claim, no guilt. A gentle 4,000-step "recovery day" is ready when you are.</p></div>
+            </div>
+          </div>
+
+          <div class="state-label">Skeleton loading</div>
+          <div class="card" style="margin:0 20px">
+            <div style="display:flex;gap:14px;align-items:center">
+              <div class="skel" style="width:44px;height:44px;border-radius:14px;flex-shrink:0"></div>
+              <div style="flex:1"><div class="skel" style="height:13px;width:70%"></div><div class="skel" style="height:11px;width:45%;margin-top:8px"></div></div>
+              <div class="skel" style="width:56px;height:22px;border-radius:99px"></div>
+            </div>
+            <div class="skel" style="height:96px;border-radius:16px;margin-top:14px"></div>
+          </div>
+
+          <div class="state-label">Goal celebration</div>
+          <div class="card" style="margin:0 20px;text-align:center;padding:22px 18px">
+            <div class="sh-ring" style="width:76px;height:76px;margin:0 auto 12px;border-radius:50%;background:var(--mint-tint);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" fill="none" stroke="var(--mint-600)" stroke-width="2.6" width="34" height="34" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg></div>
+            <b style="font-family:var(--font-display);font-size:17px;font-weight:800">Daily goal closed!</b>
+            <p style="font-size:12px;color:var(--text-2);margin-top:5px;line-height:1.6">10,000 steps. Ring complete, +8 walking coins, and day 14 of your streak.<br><span style="font-size:11px;color:var(--text-3)">Celebrations are under 2.5s, skip entirely with reduced-motion on.</span></p>
+          </div>
+          <div style="height:26px"></div>
+        </section>
+
+      </div><!-- /screens -->
+
+      <!-- ================= SHEETS ================= -->
+      <div class="sheet-wrap" id="walkSheet">
+        <div class="sheet-dim" data-close></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <h3>Start a verified walk</h3>
+          <p class="sub">Verified sessions earn the same coins as background steps — they add stronger proof and richer stats. Choose how you'll walk.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
+            <div class="goal-opt on" data-mode="outdoor" style="margin:0">
+              <div class="g-main"><b style="font-size:14px">Outdoor</b><span>GPS-verified route</span></div>
+              <div class="g-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg></div>
+            </div>
+            <div class="goal-opt" data-mode="indoor" style="margin:0">
+              <div class="g-main"><b style="font-size:14px">Indoor</b><span>Treadmill / at home</span></div>
+              <div class="g-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg></div>
+            </div>
+          </div>
+          <div style="margin-top:15px">
+            <b style="font-size:12.5px">Session goal</b>
+            <div class="chip-row" style="margin-top:9px" id="durChips">
+              <span class="chip select">15 min</span><span class="chip select on">30 min</span><span class="chip select">45 min</span><span class="chip select">Open</span>
+            </div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:17px" id="startWalkBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9.8 22l8.7-11.5H12z"/></svg>
+            Start walking
+          </button>
+          <p class="legal" style="margin-top:12px">Location is used only while the session is live. You can pause or finish anytime — steps always count.</p>
+        </div>
+      </div>
+
+      <div class="sheet-wrap" id="redeemSheet">
+        <div class="sheet-dim" data-close></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <h3>Confirm redemption</h3>
+          <p class="sub">Review the details — coins are reserved the moment you confirm.</p>
+          <div class="sum-row"><span>Item</span><b id="rdName">Steel Water Bottle 1L</b></div>
+          <div class="sum-row"><span>Coins to deduct</span><b><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg><span id="rdPrice">900</span></b></div>
+          <div class="sum-row"><span>Balance after</span><b id="rdAfter">346 coins</b></div>
+          <div class="sum-row"><span>Shipping to</span><b style="font-size:12.5px">Add address →</b></div>
+          <div class="sum-row"><span>Estimated delivery</span><b style="font-size:12.5px">7–14 days after approval</b></div>
+          <p style="font-size:10.5px;color:var(--text-3);line-height:1.6;margin:12px 0 4px">Coins are reserved now and deducted on approval. If the order is cancelled or fails review, they return automatically. I accept the program rules.</p>
+          <button class="btn btn-primary" style="margin-top:12px" id="confirmRedeem">Confirm redemption</button>
+          <button class="btn btn-ghost" style="margin-top:10px" data-close>Keep browsing</button>
+        </div>
+      </div>
+
+      <!-- ================= TAB BAR + FAB ================= -->
+      <nav id="tabbar">
+        <button class="tab" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 11 8-7 8 7"/><path d="M6 9.8V20h12V9.8"/></svg><span class="t-label">Home</span></button>
+        <button class="tab" data-tab="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-6 4 3 6-8"/><path d="M18 6h3v3"/></svg><span class="t-label">Progress</span></button>
+        <span style="width:56px"></span>
+        <button class="tab" data-tab="catalogue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="3"/><path d="M12 9V4.5a2 2 0 0 1 3.6-1.2"/><path d="M4 13h16"/></svg><span class="t-label">Rewards</span></button>
+        <button class="tab" data-tab="profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></svg><span class="t-label">Profile</span></button>
+      </nav>
+      <button id="fab" aria-label="Start a walk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17c3-1 4-4 4-7 0-2 1.4-3.5 3-3.5S14 8 14 10c0 4 2 6.5 5 7"/><circle cx="19.4" cy="17.4" r="1.5" fill="currentColor" stroke="none"/></svg><span class="fab-tag">WALK</span></button>
+
+      <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg><span id="toastText"></span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= STEPRIVO 2.0 — PROTOTYPE LOGIC ================= */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+
+/* ---------- demo state ---------- */
+const S={coins:1246,have:1246,goal:10000};
+const PRODUCTS={
+  bottle:{name:'Steel Water Bottle 1L',price:900,cat:'Everyday',stock:'In stock · 340 units',color:'#E4F6EE',stroke:'#007A56',tint:'var(--mint-tint)',
+    icon:'<path d="M9 3h6v3.2c1.8 1 3 2.9 3 5.05V19a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-7.75c0-2.15 1.2-4.05 3-5.05z"/><path d="M6.4 13h11.2"/>',
+    desc:'Double-walled stainless bottle that keeps water cold for 18 hours — a gym-bag essential and the classic first redemption.',
+    eta:'about 2 weeks · ready now'},
+  band:{name:'Resistance Band Set',price:650,cat:'Fitness',stock:'In stock · 210 units',color:'#E9F1FA',stroke:'#3D7DC8',tint:'var(--info-tint)',
+    icon:'<path d="M5 4c4 5 4 11 0 16M19 4c-4 5-4 11 0 16M7.5 12h9"/>',
+    desc:'Five progressive bands with door anchor and pouch. Perfect for home strength work between walks.',
+    eta:'ready now'},
+  rope:{name:'Speed Jump Rope',price:500,cat:'Everyday',stock:'In stock · 500 units',color:'#FCF3DC',stroke:'#8A6116',tint:'var(--gold-tint)',
+    icon:'<path d="M5 8c6-4 8 8 14 4"/><rect x="3" y="6" width="3.5" height="4" rx="1.4"/><rect x="17.5" y="10" width="3.5" height="4" rx="1.4"/>',
+    desc:'Ball-bearing speed rope with adjustable cable. A 10-minute skip session pairs perfectly with your daily walk.',
+    eta:'ready now'},
+  mat:{name:'Yoga Mat TPE 6mm',price:1800,cat:'Fitness',stock:'In stock · 96 units',color:'#E4F6EE',stroke:'#007A56',tint:'var(--mint-tint)',
+    icon:'<path d="M4 8.5h13a3.5 3.5 0 0 1 0 7H4z"/><path d="M4 8.5v7M20 8v8.5"/>',
+    desc:'Eco TPE mat with alignment lines and non-slip texture. Comes with a carry strap.',
+    eta:'about 8 weeks at your pace'},
+  powerbank:{name:'Power Bank 10,000mAh',price:2200,cat:'Electronics',stock:'In stock · 140 units',color:'#E9F1FA',stroke:'#3D7DC8',tint:'var(--info-tint)',
+    icon:'<rect x="7" y="4" width="10" height="17" rx="2.5"/><path d="M10 2.5h4M11.5 9l-1.5 3h3l-1.5 3"/>',
+    desc:'Slim 10,000mAh with 22.5W fast charge and dual outputs — GPS sessions can drain batteries; this keeps you covered.',
+    eta:'about 13 weeks at your pace'},
+  earbuds:{name:'TWS Earbuds IPX5',price:5500,cat:'Electronics',stock:'In stock · 128 units',color:'#E9F1FA',stroke:'#3D7DC8',tint:'var(--info-tint)',
+    icon:'<path d="M4 13a8 8 0 0 1 16 0"/><rect x="3" y="13" width="4" height="7" rx="2"/><rect x="17" y="13" width="4" height="7" rx="2"/>',
+    desc:'True wireless earbuds with IPX5 sweat resistance — built for workouts and monsoon commutes. 28-hour total battery with the case, touch controls, and low-latency mode.',
+    eta:'about 22 weeks at your pace'},
+  tracker:{name:'Fitness Tracker Band',price:7500,cat:'Electronics',stock:'In stock · 64 units',color:'#FCF3DC',stroke:'#8A6116',tint:'var(--gold-tint)',
+    icon:'<rect x="7" y="6.5" width="10" height="11" rx="3.2"/><path d="M9.5 3.5h5l.6 3M9.5 20.5h5l.6-3"/>',
+    desc:'14-day battery, heart-rate and sleep tracking, calls and notifications. Syncs with Health Connect.',
+    eta:'about 30 weeks at your pace'},
+  watch:{name:'Smartwatch AMOLED',price:14000,cat:'Premium',stock:'Limited · 42 left',color:'#FCF3DC',stroke:'#8A6116',tint:'var(--gold-tint)',
+    icon:'<rect x="7" y="6.5" width="10" height="11" rx="3.2"/><path d="M9.5 3.5h5l.6 3M9.5 20.5h5l.6-3M12 10.5v2.5l1.8 1"/>',
+    desc:'1.43-inch AMOLED, 5ATM water resistance, 100+ sport modes, BT calling. Limited stock drops to keep demand honest.',
+    eta:'long-horizon goal'},
+  phone:{name:'Smartphone (mid-range)',price:75000,cat:'Premium',stock:'Limited · 5 left',color:'#EDF2EF',stroke:'#54666F',tint:'var(--surface-2)',
+    icon:'<rect x="7" y="3" width="10" height="18" rx="2.6"/><path d="M11 17.8h2"/>',
+    desc:'Aspiration-tier redemption. Strictly stock-limited with full manual review. Shown to set an honest long-term horizon, not a promise.',
+    eta:'multi-month commitment'}
+};
+
+/* ---------- router ---------- */
+const TABS=['home','progress','catalogue','profile'];
+const WALLET_LIKE=['wallet'];
+let current='onboard';
+function go(name){
+  const scr=$(`.screen[data-screen="${name}"]`); if(!scr)return;
+  $$('.screen').forEach(s=>s.classList.remove('active'));
+  scr.classList.add('active'); current=name;
+  $('#screens').scrollTop=0;
+  const tabbed=TABS.includes(name)||WALLET_LIKE.includes(name);
+  $('#tabbar').classList.toggle('show',tabbed);
+  $('#fab').classList.toggle('show',tabbed);
+  $$('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===(name==='wallet'?'catalogue':name)));
+  history.replaceState(null,'','#/'+name);
+  if(name==='home')requestAnimationFrame(animateHome);
+  closeSheets();
+}
+function goBack(fallback){go(fallback)}
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]'); if(g){e.preventDefault(); const pid=g.dataset.pid; if(pid)renderProduct(pid); go(g.dataset.go); return;}
+  const b=e.target.closest('[data-back]'); if(b){e.preventDefault(); go(b.dataset.back); return;}
+  const t=e.target.closest('[data-toast]'); if(t){toast(t.dataset.toast); return;}
+  const a=e.target.closest('[data-acc]'); if(a){a.classList.toggle('open'); $('#acc-'+a.dataset.acc).classList.toggle('open'); return;}
+  const c=e.target.closest('[data-close]'); if(c){closeSheets(); return;}
+});
+
+/* ---------- tabbar / fab ---------- */
+$$('.tab').forEach(t=>t.addEventListener('click',()=>go(t.dataset.tab)));
+$('#fab').addEventListener('click',()=>openSheet('walkSheet'));
+
+/* ---------- sheets ---------- */
+function openSheet(id){$('#'+id).classList.add('show')}
+function closeSheets(){$$('.sheet-wrap').forEach(x=>x.classList.remove('show'))}
+$('#startWalkBtn').addEventListener('click',()=>{closeSheets();startSession()});
+$$('#walkSheet .goal-opt').forEach(o=>o.addEventListener('click',()=>{
+  $$('#walkSheet .goal-opt').forEach(x=>x.classList.remove('on'));o.classList.add('on');
+  $('#sessMode').textContent=o.dataset.mode==='outdoor'?'OUTDOOR · GPS VERIFIED':'INDOOR · MOTION VERIFIED';}));
+$$('#durChips .chip').forEach(c=>c.addEventListener('click',()=>{
+  $$('#durChips .chip').forEach(x=>x.classList.remove('select','on'));c.classList.add('select','on');}));
+
+/* ---------- theme ---------- */
+function setTheme(t){document.documentElement.dataset.theme=t;
+  const on=t==='dark';$('#themeToggle').classList.toggle('on',on);}
+$('#themeBtn').addEventListener('click',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
+$('#themeRow').addEventListener('click',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
+
+/* ---------- onboarding ---------- */
+const SLIDES=[
+ ['Turn every step into progress','Steprivo tracks your steps automatically in the background. Watch your day fill the ring — no smartwatch needed, your phone is enough.'],
+ ['Earn coins for verified walking','Every 1,000 verified steps = 1 coin (working default). Steps pass a quick server check first, so every coin stays fair and trustworthy.'],
+ ['Redeem real, real products','From bottles and bands to earbuds and beyond. Coins are loyalty points — never cash — and the catalogue is always honest about stock.']];
+let onbI=0;
+function paintOnb(){$('#onbTitle').textContent=SLIDES[onbI][0];$('#onbText').textContent=SLIDES[onbI][1];
+  $$('#onbDots i').forEach((d,i)=>d.classList.toggle('on',i===onbI));
+  $('#onbNext').textContent=onbI===SLIDES.length-1?'Get started':'Continue';}
+$('#onbNext').addEventListener('click',()=>{if(onbI<SLIDES.length-1){onbI++;paintOnb();}else go('signin');});
+
+/* ---------- goal ---------- */
+$$('.goal-opt[data-goal]').forEach(o=>o.addEventListener('click',()=>{
+  $$('.goal-opt[data-goal]').forEach(x=>x.classList.remove('on'));o.classList.add('on');S.goal=+o.dataset.goal;}));
+
+/* ---------- rings & count-up ---------- */
+function setRings(){$$('.ring .val[data-ring]').forEach(c=>{
+  const p=+c.dataset.ring,C=2*Math.PI*(+c.getAttribute('r'));
+  c.style.strokeDasharray=C; c.style.strokeDashoffset=C*(1-p);});}
+function countUp(el,to,dur=900){const t0=performance.now();
+  const f=n=>{const k=Math.min(1,(n-t0)/dur),v=Math.round(to*(1-Math.pow(1-k,3)));
+    el.textContent=v.toLocaleString('en-IN');if(k<1)requestAnimationFrame(f);};requestAnimationFrame(f);}
+function animateHome(){const big=$('.screen[data-screen="home"] .ring-center .big');
+  if(big)countUp(big,8412,1000);setRings();}
+
+/* ---------- session simulator ---------- */
+let sim=null,simState=null;
+function startSession(){
+  go('session');
+  simState={t:0,steps:0,paused:false,dur:30*60};
+  $('#sessTime').textContent='00:00';$('#sessSteps').textContent='0';
+  $('#sessDist').innerHTML='0.00 <small>km</small>';$('#sessPace').innerHTML='— <small>/km</small>';
+  $('#sessCoins').textContent='+0';$('#gpsWarn').style.display='none';
+  setRing(0);
+  clearInterval(sim);
+  sim=setInterval(()=>{
+    if(!simState||simState.paused)return;
+    simState.t+=30;                     // 1 real sec = 30 session sec (demo speed)
+    simState.steps+=Math.round(48+Math.random()*14);
+    paintSession();
+    if(simState.t>=simState.dur){finishSession();}
+  },1000);
+}
+function setRing(f){const c=$('#sessRing'),C=2*Math.PI*84;c.style.strokeDasharray=C;c.style.strokeDashoffset=C*(1-Math.min(1,f));}
+function paintSession(){
+  const st=simState;
+  const mm=String(Math.floor(st.t/60)).padStart(2,'0'),ss=String(st.t%60).padStart(2,'0');
+  $('#sessTime').textContent=mm+':'+ss;
+  $('#sessSteps').textContent=st.steps.toLocaleString('en-IN');
+  const km=st.steps*0.00072;
+  $('#sessDist').innerHTML=km.toFixed(2)+' <small>km</small>';
+  if(km>0.05){const secs=st.t/km;$('#sessPace').innerHTML=Math.floor(secs/60)+"'"+String(Math.round(secs%60)).padStart(2,'0')+'" <small>/km</small>';}
+  $('#sessCoins').textContent='+'+Math.floor(st.steps/1000);
+  setRing(st.t/st.dur);
+}
+$('#pauseBtn').addEventListener('click',()=>{
+  if(!simState)return;simState.paused=!simState.paused;
+  $('#pauseIco').innerHTML=simState.paused
+    ?'<path d="M8 5.5v13l11-6.5z" fill="currentColor"/>'
+    :'<rect x="7" y="5" width="3.6" height="14" rx="1.4"/><rect x="13.4" y="5" width="3.6" height="14" rx="1.4"/>';
+  toast(simState.paused?'Paused — GPS held, timer stopped':'Walking again — timer running');
+});
+$('#endBtn').addEventListener('click',()=>finishSession());
+function finishSession(){
+  if(!simState){go('summary');return;}
+  clearInterval(sim);
+  const st=simState,km=st.steps*0.00072,secs=st.t;
+  const cells=$$('.screen[data-screen="summary"] .sum-cell b');
+  if(cells.length===4){
+    cells[0].textContent=st.steps.toLocaleString('en-IN');
+    cells[1].innerHTML=km.toFixed(2)+' <small>km</small>';
+    cells[2].innerHTML=Math.floor(secs/60)+':'+String(Math.round(secs%60)).padStart(2,'0');
+    if(km>0.05){const p=secs/km;cells[3].innerHTML=Math.floor(p/60)+"'"+String(Math.round(p%60)).padStart(2,'0')+'" <small>/km</small>';}
+  }
+  const coin=Math.floor(st.steps/1000);
+  $('.screen[data-screen="summary"] .coin-earn b').textContent='+'+coin+' coins earned';
+  simState=null;go('summary');
+}
+
+/* ---------- product ---------- */
+function renderProduct(pid){
+  const p=PRODUCTS[pid];if(!p)return;  $('#pdName').textContent=p.name;
+  $('#pdPrice').textContent=p.price.toLocaleString('en-IN');
+  $('#pdCat').textContent=p.cat;
+  $('#pdStock').textContent=p.stock;
+  $('#pdStock').className='chip '+(p.stock.includes('Limited')?'gold':'mint');
+  $('#pdDesc').textContent=p.desc;
+  $('#pdEta').innerHTML='At your recent pace:<br>'+p.eta;
+  const hero=$('#pdHero');hero.style.background=p.tint;
+  $('#pdIcon').setAttribute('stroke',p.stroke);
+  $('#pdIcon').innerHTML=p.icon;
+  const pct=Math.min(100,Math.round(S.have/p.price*100));
+  $('#pdHave').textContent=S.have.toLocaleString('en-IN')+' / '+p.price.toLocaleString('en-IN');
+  $('#pdBar').style.width=pct+'%';
+  const diff=p.price-S.have,ok=diff<=0;
+  const btn=$('#pdRedeemBtn');
+  btn.disabled=!ok;
+  btn.textContent=ok?('Redeem now · '+p.price.toLocaleString('en-IN')+' coins'):('Need '+(diff.toLocaleString('en-IN'))+' more coins');
+  $('#pdNeedLine').textContent=ok?'Coins are reserved on confirmation and deducted after review':'Estimates are guidance — never a countdown';
+  $('#pdNeed').textContent=ok?'You have enough verified coins right now. Confirmation reserves them instantly; the stock and eligibility check follows.':'You need '+diff.toLocaleString('en-IN')+' more coins. Estimates assume your recent pace continues — they\'re guidance, never a guarantee or a countdown.';
+  currentPid=pid;
+}
+let currentPid='bottle';
+$('#pdRedeemBtn').addEventListener('click',()=>{
+  const p=PRODUCTS[currentPid];if(!p||p.price>S.have)return;
+  $('#rdName').textContent=p.name;
+  $('#rdPrice').textContent=p.price.toLocaleString('en-IN');
+  $('#rdAfter').textContent=(S.have-p.price).toLocaleString('en-IN')+' coins';
+  openSheet('redeemSheet');
+});
+$('#confirmRedeem').addEventListener('click',()=>{
+  const p=PRODUCTS[currentPid];if(!p)return;
+  S.have-=p.price;S.coins=S.have;
+  closeSheets();go('success');
+  toast('Coins reserved — order created');
+});
+
+/* ---------- toast ---------- */
+let toastT=null;
+function toast(msg){$('#toastText').textContent=msg;$('#toast').classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>$('#toast').classList.remove('show'),2400);}
+
+/* ---------- misc ---------- */
+function paintGreet(){const h=new Date().getHours();
+  $('#greetLine').textContent=h<12?'Good morning':h<17?'Good afternoon':'Good evening';}
+const ROUTES=['onboard','signin','permissions','goal','home','progress','badges','leaderboard','challenges','wallet','history','catalogue','product','orders','profile','settings','notifications','help','states'];
+(function buildLinks(){$('#quicklinks').innerHTML=ROUTES.map(r=>
+  `<button data-r="${r}">${r}</button>`).join('');
+  $$('#quicklinks button').forEach(b=>b.addEventListener('click',()=>{
+    if(b.dataset.r==='product')renderProduct('earbuds');
+    go(b.dataset.r);}));})();
+$('#restartBtn').addEventListener('click',()=>{onbI=0;paintOnb();go('onboard');});
+window.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheets();});
+
+/* ---------- boot ---------- */
+(function boot(){
+  paintGreet();paintOnb();setRings();
+  const h=(location.hash||'').replace('#/','');
+  go(ROUTES.includes(h)?h:'onboard');
+})();
+</script>
+<script src="offline.js"></script>
+</body>
+</html>
