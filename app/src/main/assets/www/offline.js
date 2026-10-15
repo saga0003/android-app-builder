@@ -129,6 +129,52 @@ const logoSlot=node('.screen[data-screen="wallet"] .wh-bal svg');if(logoSlot){co
 const homeCoin=node('.coin-card .cc-coin');if(homeCoin)homeCoin.innerHTML='<img src="coin.svg" alt="Rivo coin" style="width:46px;height:46px;object-fit:contain">';
 const warning=document.createElement('div');warning.className='offline-notice';warning.textContent='LOCAL BETA · NO CLOUD SYNC · TEST COINS ONLY';document.querySelector('#app')?.appendChild(warning);
 const style=document.createElement('style');style.textContent='.offline-notice{position:absolute;top:0;right:0;left:0;font-size:9px;letter-spacing:.7px;font-weight:800;color:#fff;background:#0A1628;text-align:center;padding:5px;z-index:50}.native-app #statusbar,.native-app .notch{display:none!important}.native-app .screen{padding-top:27px}.native-app #tabbar{height:78px}.native-app .sheet{padding-bottom:36px}';document.head.appendChild(style);if(isNative)document.documentElement.classList.add('native-app');
+// Final truth-in-UI polish: never show design-prototype data as real account activity.
+SLIDES[0]=['Welcome to Steprivo','Walk with your phone and see your real daily steps. Track at your own pace — no smartwatch required.'];
+SLIDES[1]=['Build a local Rivo balance','For this offline test, 1,000 locally recorded sensor steps add 1 test Rivo coin. Real reward verification will arrive with Supabase.'];
+SLIDES[2]=['Explore future rewards','Browse physical-product concepts and try test redemptions. This build cannot place or deliver real orders.'];
+paintOnb();
+setText('.screen[data-screen="permissions"] .perm-card p','Uses the Android step-counter sensor. The app reads available sensor totals when opened. Some walking may not be recoverable across reboots or midnight.');
+const permCards=all('.screen[data-screen="permissions"] .perm-card');
+if(permCards[0])setText('p','Android activity permission allows the sensor to record steps while the app is in use and helps recover same-day sensor changes on reopening.',permCards[0]);
+const hc=node('.screen[data-screen="permissions"] .card.tight');if(hc){setText('p','Health Connect integration is planned for the next phase. This version reads the built-in Android step counter.',hc);setText('.chip','Later',hc)}
+const prevUpdateHome=updateHome;
+updateHome=function(){prevUpdateHome();
+ const home=node('.screen[data-screen="home"]');
+ let streak=0;let day=new Date();if(getSteps()<d.goal)day.setDate(day.getDate()-1);
+ for(let i=0;i<365;i++){if(getSteps(day.toLocaleDateString('en-CA'))<d.goal)break;streak++;day.setDate(day.getDate()-1)}
+ setText('.hero-top .chip:last-child','Streak '+streak,home);
+};
+const prevUpdateProfile=updateProfile;
+updateProfile=function(){prevUpdateProfile();const p=node('.screen[data-screen="profile"]');const labels=all('.pstat span',p);if(labels[2])labels[2].textContent='WALKS';};
+const prevUpdateProgress=updateProgress;
+updateProgress=function(){prevUpdateProgress();const p=node('.screen[data-screen="progress"]');const items=all('.card .row-item',p);let best=Math.max(0,...Object.values(d.days).map(Number));let lifetime=d.lifetime;
+ if(items[0]){setText('.ri-title','Recorded sessions',items[0]);setText('.ri-sub','Saved only on this phone',items[0]);setText('.ri-end',fmt(d.sessions.length),items[0])}
+ if(items[1]){setText('.ri-title','Best walking day',items[1]);setText('.ri-sub','Locally recorded sensor steps',items[1]);setText('.ri-end',fmt(best),items[1])}
+ if(items[2]){setText('.ri-title','Lifetime local steps',items[2]);setText('.ri-sub','Since you began using Steprivo',items[2]);setText('.ri-end',fmt(lifetime),items[2])}
+};
+const prevRenderProduct=renderProduct;
+renderProduct=function(pid){prevRenderProduct(pid);const p=node('.screen[data-screen="product"]');
+ const eligibility=all('.elig-check span',p);
+ if(eligibility[0])eligibility[0].textContent='Local test profile (no sign-in verification)';
+ if(eligibility[1])eligibility[1].textContent='Coin balance is simulated from local steps';
+ if(eligibility[2])eligibility[2].textContent='Real inventory is NOT connected';
+ if(eligibility[3])eligibility[3].textContent='Any redemption here creates a test record only';
+ setText('#acc-terms','No shipping or physical redemption is possible in the local beta. Test redemptions deduct only the local test balance.',p);
+};
+const prevUpdateCatalogue=updateCatalogue;
+updateCatalogue=function(){prevUpdateCatalogue();const c=node('.screen[data-screen="catalogue"]');setText('.section-h small','Concept products only · test prices · no real inventory',c);const featured=node('.card[style*="margin:14px"]',c);if(featured)setText('[style*="font-size:11.5px"]','Illustrative goal · not a live offer',featured)};
+const prevUpdateOrders=updateOrders;
+updateOrders=function(){prevUpdateOrders();};
+const prevFinishSession=finishSession;
+finishSession=function(){prevFinishSession();const s=node('.screen[data-screen="summary"]');
+ const where=all('.card',s);if(where[0]){const title=node('.card-title',where[0]);if(title)title.textContent='Locally stored session';const content=node('.list',where[0]);if(content)content.innerHTML='<div class="row-item"><div class="ri-main"><div class="ri-title">Walking data saved</div><div class="ri-sub">This session is stored on this phone. No cloud verification is active.</div></div></div>'}
+};
+const prevRepaint=repaint;
+repaint=function(){prevRepaint();updateHome();updateProgress();updateProfile();updateCatalogue();};
+const success=node('.screen[data-screen="success"]');if(success){
+ const card=node('.card',success);if(card){setText('.card-title','Local test only',card);const list=node('.tl',card);if(list)list.innerHTML='<div class="tl-item done"><div class="tl-dot"></div><div><b>Test record saved</b><span>Only your local test coin balance changed.</span></div></div><div class="tl-item"><div class="tl-dot"></div><div><b>No real order</b><span>Nothing will be reserved, packed, shipped, or delivered.</span></div></div>'}
+}
 repaint();if(d.onboarded){go(d.session?'session':'home');if(d.session){startTick();paintRealSession();}}else go('onboard');
 if(isNative)nativeCall('requestSteps');
 })();
